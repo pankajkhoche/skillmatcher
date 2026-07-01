@@ -7,16 +7,21 @@ import { Sparkles, MapPin, DollarSign, Briefcase, ArrowRight } from "lucide-reac
 export default function Jobs() {
   const [loading, setLoading] = useState(false);
   const [jobs, setJobs] = useState([]);
+  const [tab, setTab] = useState("real");
 
   const load = async () => {
     setLoading(true);
     try {
-      const r = await api.post("/jobs/suggest", {}, { timeout: 90000 });
-      setJobs(r.data.jobs || []);
-      toast.success("Fresh job matches");
-    } catch (e) {
-      toast.error(e.response?.data?.detail || "Add skills or upload a resume first");
-    } finally { setLoading(false); }
+      if (tab === "real") {
+        const r = await api.get("/jobs/real", { timeout: 30000 });
+        setJobs((r.data.jobs || []).map(j => ({ ...j, match_reason: j.matched_skills?.length ? `Matches ${j.matched_skills.join(", ")}` : "Matched by role/skills", key_requirements: j.matched_skills || [] })));
+      } else {
+        const r = await api.post("/jobs/suggest", {}, { timeout: 90000 });
+        setJobs(r.data.jobs || []);
+      }
+      toast.success("Fresh matches");
+    } catch (e) { toast.error(e.response?.data?.detail || "Failed"); }
+    finally { setLoading(false); }
   };
 
   const scoreCls = (s) => s >= 80 ? "text-[#22D3EE] border-[#22D3EE]/30 bg-[#22D3EE]/10" : s >= 60 ? "text-amber-500 border-amber-500/30 bg-amber-500/10" : "text-zinc-400 border-white/10 bg-white/[0.03]";
@@ -33,6 +38,11 @@ export default function Jobs() {
           <button data-testid="jobs-refresh" onClick={load} disabled={loading} className="brand-bg text-white font-medium px-5 py-3 rounded-xl brand-bg-hover transition-all brand-glow inline-flex items-center gap-2 disabled:opacity-40">
             <Sparkles size={16} strokeWidth={2}/> {loading ? "Finding…" : "Find matches"}
           </button>
+        </div>
+        <div className="flex gap-2 border-b border-white/[0.06] mb-6">
+          {[["real","Real Jobs (Remotive)"],["ai","AI Curated"]].map(([id,label])=>(
+            <button key={id} data-testid={`jobs-tab-${id}`} onClick={()=>{setTab(id); setJobs([]);}} className={`px-4 py-3 text-sm font-medium border-b-2 transition-all ${tab===id? "border-cyan-400 text-white":"border-transparent text-zinc-500 hover:text-zinc-300"}`}>{label}</button>
+          ))}
         </div>
 
         {jobs.length === 0 && !loading && (
@@ -82,6 +92,9 @@ export default function Jobs() {
                 <p className="text-sm mt-4 p-4 rounded-xl border border-[#22D3EE]/15 bg-[#22D3EE]/[0.03] text-zinc-300 leading-relaxed">
                   <span className="text-[#22D3EE] font-medium">Why you fit — </span>{j.why_you_fit}
                 </p>
+              )}
+              {j.url && (
+                <a href={j.url} target="_blank" rel="noopener noreferrer" data-testid={`job-apply-${i}`} className="inline-flex items-center gap-1.5 mt-4 text-sm text-cyan-300 hover:text-cyan-100 font-medium">Apply on Remotive →</a>
               )}
             </div>
           ))}

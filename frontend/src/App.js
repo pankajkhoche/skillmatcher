@@ -15,6 +15,8 @@ import Jobs from "@/pages/Jobs";
 import Profile from "@/pages/Profile";
 import Interview from "@/pages/Interview";
 import History from "@/pages/History";
+import Roadmap from "@/pages/Roadmap";
+import ResumeCompare from "@/pages/ResumeCompare";
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
@@ -40,6 +42,8 @@ function App() {
             <Route path="/jobs" element={<Protected><Jobs /></Protected>} />
             <Route path="/interview" element={<Protected><Interview /></Protected>} />
             <Route path="/history" element={<Protected><History /></Protected>} />
+            <Route path="/roadmap" element={<Protected><Roadmap /></Protected>} />
+            <Route path="/compare" element={<Protected><ResumeCompare /></Protected>} />
             <Route path="/profile" element={<Protected><Profile /></Protected>} />
           </Routes>
           <Toaster position="top-right" theme="dark" />

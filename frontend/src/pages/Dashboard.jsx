@@ -9,10 +9,10 @@ const FEATURES = [
   { path: "/rewriter", title: "AI Rewriter", desc: "Paste a JD. Get a resume tuned for it. Download PDF.", icon: <Sparkles strokeWidth={1.5} />, testid: "card-rewriter", live: true, num: "02", featured: true },
   { path: "/skills", title: "Skills & Role Fit", desc: "Which roles fit you — and skills to acquire.", icon: <Target strokeWidth={1.5} />, testid: "card-skills", live: true, num: "03" },
   { path: "/jobs", title: "Job Matcher", desc: "Curated roles ranked by fit against your profile.", icon: <Briefcase strokeWidth={1.5} />, testid: "card-jobs", live: true, num: "04" },
-  { path: "/interview", title: "AI Mock Interview", desc: "Practice with AI. Get a scorecard PDF.", icon: <MessageSquare strokeWidth={1.5} />, testid: "card-interview", live: true, num: "05" },
-  { path: null, title: "Career Roadmap", desc: "Long-term trajectory planning.", icon: <Map strokeWidth={1.5} />, testid: "card-roadmap", live: false, num: "06" },
+  { path: "/interview", title: "AI Mock Interview", desc: "Practice with AI (text or voice). Scorecard PDF.", icon: <MessageSquare strokeWidth={1.5} />, testid: "card-interview", live: true, num: "05" },
+  { path: "/roadmap", title: "Career Roadmap", desc: "12-month trajectory: phases, milestones, resources.", icon: <Map strokeWidth={1.5} />, testid: "card-roadmap", live: true, num: "06" },
   { path: "/history", title: "History", desc: "Every analysis, rewrite, and interview — one place.", icon: <History strokeWidth={1.5} />, testid: "card-history", live: true, num: "07" },
-  { path: null, title: "Resume Compare", desc: "A/B compare two resume versions.", icon: <GitCompare strokeWidth={1.5} />, testid: "card-compare", live: false, num: "08" },
+  { path: "/compare", title: "Resume Compare", desc: "Upload 2 resumes → side-by-side + winner.", icon: <GitCompare strokeWidth={1.5} />, testid: "card-compare", live: true, num: "08" },
   { path: "/profile", title: "Profile", desc: "Your target role, skills, and preferences.", icon: <User strokeWidth={1.5} />, testid: "card-profile", live: true, num: "09" },
 ];
 

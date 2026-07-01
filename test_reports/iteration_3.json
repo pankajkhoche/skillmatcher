@@ -1,0 +1,34 @@
+{
+  "summary": "Phase 3 smoke tests: Backend jobs/real, roadmap/generate, resume/compare all pass. Whisper transcribe endpoint returns 500 due to str path passed to OpenAISpeechToText (needs bytes/PathLike/file object). Frontend Dashboard, /roadmap, /compare, /jobs (both tabs, Apply on Remotive link verified), /interview (mic button appears after Start, click handled gracefully with mic-denied toast, no crash) all render with correct data-testids.",
+  "tested_scope": ["frontend", "backend", "auth", "integration"],
+  "passed": [
+    "POST /api/auth/signup -> 200, JWT token issued",
+    "GET /api/jobs/real?search=python -> 200, source=Remotive, 12 jobs, first_title present",
+    "POST /api/roadmap/generate -> 200, phases=4, gap_analysis, long_term_vision, monthly_habits=10, certifications=7, current_position + target_position",
+    "POST /api/resume/compare -> 200, keys: resume_a_score=72, resume_b_score=68, winner=A, verdict, strengths/weaknesses/recommendation/best_of_both all present",
+    "Dashboard: card-roadmap, card-compare, nav-roadmap, nav-compare all present",
+    "/roadmap: rm-target + rm-generate -> rm-result rendered end-to-end",
+    "/compare: compare-drop-a/b, compare-file-a/b, compare-btn all rendered",
+    "/jobs: jobs-tab-real (default) + jobs-tab-ai present; clicking Find matches -> job-apply-0 link points to remotive.com",
+    "/interview: iv-mic appears after Start Interview; clicking it in headless (no mic perm) shows 'Microphone permission denied' toast — no crash, no console error"
+  ],
+  "failed": [
+    {
+      "area": "backend /api/interview/transcribe",
+      "issue": "Returns 500 Internal Server Error. Root cause: server.py line 526 calls `stt.transcribe(file=tmp_path, ...)` passing a str path. litellm/OpenAI SDK error: 'Expected entry at `file` to be bytes, an io.IOBase instance, PathLike or a tuple but received <class \\'str\\'>'.",
+      "evidence": "curl -F 'file=@/tmp/tone.wav' /api/interview/transcribe -> HTTP 500. Backend log: emergentintegrations/llm/openai/speech_to_text.py:192 raises 'Failed to transcribe audio: litellm.APIConnectionError: ... received <class str> instead.'",
+      "priority": "HIGH"
+    }
+  ],
+  "action_items": [
+    "Fix /api/interview/transcribe in /app/backend/server.py line 526: wrap tmp_path so a file object or pathlib.Path is passed instead of str. E.g. `open(tmp_path, 'rb')` or `pathlib.Path(tmp_path)` depending on what OpenAISpeechToText.transcribe expects. Voice interview UI button works but calls will 500 until this is fixed."
+  ],
+  "success_rate": {"backend": "75% (3/4 new endpoints)", "frontend": "100% (all Phase 3 UI verified)"},
+  "retest_needed": true,
+  "full_testing_deferred": true,
+  "notes": {
+    "signup_used": "test+1782887308@talentiq.dev / Password123!",
+    "whisper_field_name": "backend expects multipart field 'file' (matches frontend)",
+    "regression_signals": "History/rewrites, /interview/start, /interview/submit, /skills/analyze all 200 in backend logs during smoke — no regressions observed"
+  }
+}

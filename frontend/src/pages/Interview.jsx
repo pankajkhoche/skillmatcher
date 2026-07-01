@@ -2,7 +2,47 @@ import React, { useState } from "react";
 import Nav from "@/components/Nav";
 import api from "@/lib/api";
 import { toast } from "sonner";
-import { Sparkles, ArrowRight, Download, Trophy, MessageSquare } from "lucide-react";
+import { Sparkles, ArrowRight, Download, Trophy, MessageSquare, Mic, Square } from "lucide-react";
+
+function VoiceRecorder({ onTranscribed, disabled }) {
+  const [recording, setRecording] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const mediaRef = React.useRef(null);
+  const chunksRef = React.useRef([]);
+
+  const start = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      chunksRef.current = [];
+      mr.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);
+      mr.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        setBusy(true);
+        try {
+          const fd = new FormData();
+          fd.append("file", blob, "recording.webm");
+          const r = await api.post("/interview/transcribe", fd, { headers: { "Content-Type": "multipart/form-data" }, timeout: 90000 });
+          onTranscribed(r.data.text || "");
+          toast.success("Transcribed");
+        } catch { toast.error("Transcription failed"); }
+        finally { setBusy(false); }
+      };
+      mr.start();
+      mediaRef.current = mr;
+      setRecording(true);
+    } catch { toast.error("Microphone permission denied"); }
+  };
+  const stop = () => { mediaRef.current?.stop(); setRecording(false); };
+
+  return (
+    <button type="button" disabled={disabled || busy} onClick={recording ? stop : start} data-testid="iv-mic"
+      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all border ${recording ? "border-red-500/50 bg-red-500/10 text-red-300" : "border-cyan-400/30 bg-cyan-500/[0.05] text-cyan-300 hover:bg-cyan-500/10"} disabled:opacity-40`}>
+      {busy ? "Transcribing…" : recording ? (<><Square size={14}/> Stop recording</>) : (<><Mic size={14}/> Answer with voice</>)}
+    </button>
+  );
+}
 
 export default function Interview() {
   const [role, setRole] = useState("");
@@ -90,6 +130,7 @@ export default function Interview() {
               <div className="brand-bg h-full transition-all" style={{ width: `${((current+1)/questions.length)*100}%` }}/>
             </div>
             <h2 className="font-heading text-2xl font-light mb-6">{questions[current]?.question}</h2>
+            <div className="mb-3"><VoiceRecorder disabled={scoring} onTranscribed={(t)=>{ const a=[...answers]; a[current]=((a[current]||"")+" "+t).trim(); setAnswers(a); }}/></div>
             <textarea
               data-testid={`iv-answer-${current}`}
               value={answers[current] || ""}

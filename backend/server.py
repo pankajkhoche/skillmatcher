@@ -27,6 +27,8 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.enums import TA_LEFT
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage
+from emergentintegrations.llm.openai.speech_to_text import OpenAISpeechToText
+import httpx
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -505,6 +507,137 @@ async def interview_pdf(payload: dict, user=Depends(get_current_user)):
     return Response(content=buf.getvalue(), media_type="application/pdf",
                     headers={"Content-Disposition": f'attachment; filename="talentiq_interview_{iv_id[:8]}.pdf"'})
 
+
+
+
+# ---------- Voice Interview: Transcribe ----------
+@api_router.post("/interview/transcribe")
+async def transcribe_audio(file: UploadFile = File(...), user=Depends(get_current_user)):
+    ext = (file.filename or "").split(".")[-1].lower()
+    if ext not in ["mp3", "mp4", "mpeg", "mpga", "m4a", "wav", "webm"]:
+        # Default to webm since MediaRecorder produces webm/opus
+        ext = "webm"
+    data = await file.read()
+    tmp_path = f"/tmp/tiq_{uuid.uuid4()}.{ext}"
+    with open(tmp_path, "wb") as f:
+        f.write(data)
+    try:
+        stt = OpenAISpeechToText(api_key=EMERGENT_LLM_KEY)
+        result = await stt.transcribe(file=tmp_path, model="whisper-1", response_format="json")
+        text = result.get("text", "") if isinstance(result, dict) else str(result)
+        return {"text": text}
+    finally:
+        try: os.remove(tmp_path)
+        except Exception: pass
+
+
+# ---------- Career Roadmap Deep-Dive ----------
+ROADMAP_SYSTEM = """You are a world-class career strategist. Produce a comprehensive, actionable 12-month career roadmap.
+Return STRICT JSON:
+{
+  "current_position": string,
+  "target_position": string,
+  "gap_analysis": string,
+  "phases": [
+    {
+      "phase": int (1-4),
+      "title": string,
+      "duration": string (e.g. "Months 1-3"),
+      "focus": string,
+      "milestones": [string, ...],
+      "skills_to_learn": [string, ...],
+      "resources": [{"name": string, "type": "course"|"book"|"project"|"community", "url_hint": string}],
+      "success_metric": string
+    }
+  ],
+  "long_term_vision": string,
+  "monthly_habits": [string, ...],
+  "certifications": [string, ...],
+  "estimated_salary_impact": string
+}
+Provide 4 phases covering 12 months. Return ONLY JSON."""
+
+
+class RoadmapIn(BaseModel):
+    current_role: Optional[str] = ""
+    target_role: str
+    skills: List[str] = []
+
+
+@api_router.post("/roadmap/generate")
+async def gen_roadmap(inp: RoadmapIn, user=Depends(get_current_user)):
+    if not inp.target_role:
+        raise HTTPException(400, "target_role required")
+    skills = inp.skills or user.get("skills", [])
+    prompt = f"CURRENT ROLE: {inp.current_role or 'not specified'}\nTARGET ROLE: {inp.target_role}\nCURRENT SKILLS: {', '.join(skills[:20])}"
+    result = await call_claude_json(ROADMAP_SYSTEM, prompt)
+    await db.roadmaps.insert_one({
+        "id": str(uuid.uuid4()), "user_id": user["id"],
+        "target_role": inp.target_role, "roadmap": result,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    return result
+
+
+# ---------- Resume Compare ----------
+COMPARE_SYSTEM = """You are an expert resume reviewer. Compare two resumes and produce STRICT JSON:
+{
+  "resume_a_score": int (0-100),
+  "resume_b_score": int (0-100),
+  "winner": "A"|"B"|"tie",
+  "verdict": string,
+  "resume_a_strengths": [string, ...],
+  "resume_b_strengths": [string, ...],
+  "resume_a_weaknesses": [string, ...],
+  "resume_b_weaknesses": [string, ...],
+  "recommendation": string,
+  "best_of_both": [string, ...]
+}
+Return ONLY JSON."""
+
+
+@api_router.post("/resume/compare")
+async def compare_resumes(resume_a: UploadFile = File(...), resume_b: UploadFile = File(...), user=Depends(get_current_user)):
+    text_a = extract_text_from_upload(resume_a.filename, await resume_a.read())
+    text_b = extract_text_from_upload(resume_b.filename, await resume_b.read())
+    if len(text_a) < 50 or len(text_b) < 50:
+        raise HTTPException(400, "Could not extract enough text from both resumes")
+    prompt = f"RESUME A:\n{text_a}\n\n---\n\nRESUME B:\n{text_b}"
+    result = await call_claude_json(COMPARE_SYSTEM, prompt)
+    return {"comparison": result, "resume_a_name": resume_a.filename, "resume_b_name": resume_b.filename}
+
+
+# ---------- Real Job Board (Remotive - free) ----------
+@api_router.get("/jobs/real")
+async def real_jobs(user=Depends(get_current_user), search: Optional[str] = None):
+    query = search or user.get("target_role") or (user.get("skills", ["software"])[:1][0] if user.get("skills") else "software")
+    url = "https://remotive.com/api/remote-jobs"
+    params = {"search": query, "limit": 12}
+    try:
+        async with httpx.AsyncClient(timeout=20) as ac:
+            r = await ac.get(url, params=params)
+            data = r.json()
+    except Exception as e:
+        raise HTTPException(502, f"Job feed unavailable: {e}")
+    jobs = []
+    user_skills_lower = [s.lower() for s in user.get("skills", [])]
+    for j in data.get("jobs", [])[:12]:
+        text = ((j.get("title","") + " " + (j.get("description","") or ""))[:2000]).lower()
+        matched = [s for s in user.get("skills", []) if s.lower() in text]
+        score = min(100, 40 + len(matched) * 8) if matched else 40
+        jobs.append({
+            "title": j.get("title"),
+            "company": j.get("company_name"),
+            "location": j.get("candidate_required_location", "Remote"),
+            "type": j.get("job_type", "Full-time").replace("_"," ").title(),
+            "salary_range": j.get("salary") or "Not disclosed",
+            "match_score": score,
+            "matched_skills": matched,
+            "url": j.get("url"),
+            "posted_at": j.get("publication_date", ""),
+        })
+    jobs.sort(key=lambda x: x["match_score"], reverse=True)
+    return {"query": query, "jobs": jobs, "source": "Remotive"}
 
 app.include_router(api_router)
 
