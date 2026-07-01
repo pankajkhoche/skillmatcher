@@ -34,7 +34,7 @@ export default function History() {
 
         <div className="flex gap-2 border-b border-white/[0.06] mb-6">
           {tabs.map(t => (
-            <button key={t.id} onClick={()=>setTab(t.id)} data-testid={`history-tab-${t.id}`} className={`px-4 py-3 text-sm font-medium inline-flex items-center gap-2 border-b-2 transition-all ${tab===t.id? "border-purple-400 text-white":"border-transparent text-zinc-500 hover:text-zinc-300"}`}>
+            <button key={t.id} onClick={()=>setTab(t.id)} data-testid={`history-tab-${t.id}`} className={`px-4 py-3 text-sm font-medium inline-flex items-center gap-2 border-b-2 transition-all ${tab===t.id? "border-cyan-400 text-white":"border-transparent text-zinc-500 hover:text-zinc-300"}`}>
               {t.icon} {t.label} <span className="font-mono text-xs text-zinc-600">({t.count})</span>
             </button>
           ))}

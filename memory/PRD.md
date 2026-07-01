@@ -25,11 +25,17 @@ Build an AI career platform (TalentIQ) for job seekers & college students. Featu
 ✅ Job Matcher: AI-generated job matches with match scores
 ✅ Profile page (edit name, target role, view skills)
 
-## Test Results (iteration_1)
-✅ 100% backend pass, 100% frontend pass
-✅ Claude Sonnet 4.5 integration confirmed working
-✅ PDF upload/analyze/rewrite/download all functional
-✅ Full E2E user journey verified
+## Phase 2 - Implemented (2026-02)
+✅ **AI Mock Interview** — /interview: role + difficulty → 5 AI-generated questions → text answers → scorecard (overall + 4 metrics: Communication, Technical, Confidence, Clarity) + strengths/improvements/next-steps
+✅ **PDF Scorecard download** — /api/interview/scorecard/pdf
+✅ **History timeline** — /history: 3 tabs for past resume analyses, rewrites, and interviews (persisted in MongoDB)
+✅ **Cinematic intro splash** — framer-motion morphing 3D cube + text reveal (2.4s, session-cached)
+✅ **3D floating hero shape** — rotating hexagonal glass prism behind ATS card
+✅ **New palette** — Electric cyan (#22D3EE) + coral (#FB7185) on deep navy (#06060B)
+
+## Test Results
+✅ iteration_1: 100% Phase 1 pass (auth + resume + rewriter + skills + jobs + profile)
+✅ iteration_2: 100% Phase 2 pass (interview flow + scorecard PDF + history + regressions)
 
 ## Phase 2 - Deferred
 - P0: AI Mock Interview (voice/text) + Scorecard PDF (Communication, Technical, Confidence, Improvement)

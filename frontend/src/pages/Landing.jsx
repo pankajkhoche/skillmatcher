@@ -8,8 +8,8 @@ export default function Landing() {
     <div className="min-h-screen bg-[#06060B] text-white relative overflow-hidden">
       {/* Ambient background */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-500/[0.06] rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-purple-500/[0.04] rounded-full blur-[100px]" />
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-cyan-500/[0.06] rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-cyan-500/[0.04] rounded-full blur-[100px]" />
       </div>
 
       <div className="relative">
@@ -22,7 +22,7 @@ export default function Landing() {
               <div className="overline mb-8">— For ambitious talent</div>
               <h1 className="font-heading font-light text-5xl sm:text-6xl lg:text-7xl tracking-tighter leading-[1.02] mb-8">
                 Your career, <br />
-                engineered by <span className="text-[#C084FC] italic font-normal">intelligence.</span>
+                engineered by <span className="text-[#22D3EE] italic font-normal">intelligence.</span>
               </h1>
               <p className="text-lg text-zinc-400 max-w-xl mb-10 leading-relaxed">
                 Instant ATS analysis. AI-rewritten resumes tuned to any job. Precision role-fit intelligence. TalentIQ is the operating system for professionals who take their trajectory seriously.
@@ -76,7 +76,7 @@ export default function Landing() {
                           <span className="font-mono text-zinc-300">{v}</span>
                         </div>
                         <div className="h-[3px] bg-white/5 rounded-full overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-[#C084FC]/50 to-[#C084FC]" style={{ width: `${v}%` }} />
+                          <div className="h-full bg-gradient-to-r from-[#22D3EE]/50 to-[#22D3EE]" style={{ width: `${v}%` }} />
                         </div>
                       </div>
                     ))}
@@ -85,10 +85,10 @@ export default function Landing() {
                 {/* Small overlay card */}
                 <div className="glass rounded-xl p-4 absolute -bottom-8 -left-8 w-64 ring-gold">
                   <div className="flex items-center gap-2 mb-1">
-                    <TrendingUp size={14} className="text-[#C084FC]" strokeWidth={2} />
+                    <TrendingUp size={14} className="text-[#22D3EE]" strokeWidth={2} />
                     <div className="overline">Match improved</div>
                   </div>
-                  <div className="font-heading text-2xl font-light">35 → <span className="text-[#C084FC]">92</span></div>
+                  <div className="font-heading text-2xl font-light">35 → <span className="text-[#22D3EE]">92</span></div>
                 </div>
               </div>
             </div>
@@ -101,15 +101,15 @@ export default function Landing() {
             {Array.from({ length: 2 }).map((_, i) => (
               <div key={i} className="flex items-center gap-16">
                 <span>Trusted by ambitious talent</span>
-                <span className="text-[#C084FC]">◆</span>
+                <span className="text-[#22D3EE]">◆</span>
                 <span>ATS-grade analysis</span>
-                <span className="text-[#C084FC]">◆</span>
+                <span className="text-[#22D3EE]">◆</span>
                 <span>Real-time rewriting</span>
-                <span className="text-[#C084FC]">◆</span>
+                <span className="text-[#22D3EE]">◆</span>
                 <span>Role-fit intelligence</span>
-                <span className="text-[#C084FC]">◆</span>
+                <span className="text-[#22D3EE]">◆</span>
                 <span>Precision job matching</span>
-                <span className="text-[#C084FC]">◆</span>
+                <span className="text-[#22D3EE]">◆</span>
               </div>
             ))}
           </div>
@@ -134,9 +134,9 @@ export default function Landing() {
         {/* CTA */}
         <section className="max-w-5xl mx-auto px-6 lg:px-8 pb-32">
           <div className="glass rounded-3xl p-14 md:p-20 text-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.05] via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.05] via-transparent to-transparent" />
             <div className="relative">
-              <Award className="mx-auto mb-6 text-[#C084FC]" size={40} strokeWidth={1.2} />
+              <Award className="mx-auto mb-6 text-[#22D3EE]" size={40} strokeWidth={1.2} />
               <h2 className="font-heading font-light text-4xl sm:text-5xl tracking-tighter mb-5">Stop guessing. Start landing.</h2>
               <p className="text-lg text-zinc-400 max-w-xl mx-auto mb-10">TalentIQ turns your resume into a machine-optimized asset — free, in seconds.</p>
               <Link to="/signup" data-testid="cta-signup" className="brand-bg text-white font-medium px-8 py-4 rounded-xl inline-flex items-center gap-2 brand-bg-hover transition-all brand-glow">
@@ -159,9 +159,9 @@ export default function Landing() {
 
 function FeatureCard({ icon, title, desc, num, featured }) {
   return (
-    <div className={`group relative rounded-2xl border p-8 card-hover ${featured ? "bg-gradient-to-br from-purple-500/[0.06] to-transparent border-purple-400/20" : "bg-[#0A0A12] border-white/[0.06]"}`}>
+    <div className={`group relative rounded-2xl border p-8 card-hover ${featured ? "bg-gradient-to-br from-cyan-500/[0.06] to-transparent border-cyan-400/20" : "bg-[#0A0A12] border-white/[0.06]"}`}>
       <div className="flex items-start justify-between mb-8">
-        <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${featured ? "bg-[#C084FC]/10 text-[#C084FC]" : "bg-white/[0.03] text-zinc-400"}`}>
+        <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${featured ? "bg-[#22D3EE]/10 text-[#22D3EE]" : "bg-white/[0.03] text-zinc-400"}`}>
           {icon}
         </div>
         <span className="font-mono text-xs text-zinc-600">{num}</span>

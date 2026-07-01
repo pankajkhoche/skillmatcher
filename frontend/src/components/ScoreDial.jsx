@@ -7,7 +7,7 @@ export default function ScoreDial({ score = 0, size = 200, label = "ATS Score" }
   const c = 2 * Math.PI * r;
   const offset = c - (s / 100) * c;
   // Interpolate zinc -> amber
-  const color = s >= 80 ? "#C084FC" : s >= 50 ? "#F59E0B" : "#71717A";
+  const color = s >= 80 ? "#22D3EE" : s >= 50 ? "#F59E0B" : "#71717A";
 
   return (
     <div className="relative inline-flex items-center justify-center" data-testid="score-dial" style={{ width: size, height: size }}>

@@ -38,7 +38,7 @@ export default function IntroSplash({ onDone }) {
             className="absolute"
           >
             <div className="w-32 h-32 relative" style={{ transformStyle: "preserve-3d", animation: "rotate-3d 3s linear infinite" }}>
-              <div className="absolute inset-0 rounded-2xl border-2 border-purple-400/60 brand-bg opacity-40" />
+              <div className="absolute inset-0 rounded-2xl border-2 border-cyan-400/60 brand-bg opacity-40" />
               <div className="absolute inset-0 rounded-2xl border-2 border-pink-400/60" style={{ transform: "rotateY(90deg) translateZ(64px)" }} />
               <div className="absolute inset-0 rounded-2xl border-2 border-orange-400/60" style={{ transform: "rotateX(90deg) translateZ(64px)" }} />
             </div>

@@ -7,10 +7,10 @@
 
 :root {
     color-scheme: dark;
-    --brand-start: #A855F7;
-    --brand-mid: #EC4899;
-    --brand-end: #F97316;
-    --brand-glow: rgba(168, 85, 247, 0.35);
+    --brand-start: #06B6D4;
+    --brand-mid: #FB7185;
+    --brand-end: #FBBF24;
+    --brand-glow: rgba(6, 182, 212, 0.35);
 }
 
 body {
@@ -35,19 +35,19 @@ body {
         --card-foreground: 210 40% 98%;
         --popover: 240 15% 6%;
         --popover-foreground: 210 40% 98%;
-        --primary: 292 84% 61%;
+        --primary: 188 86% 53%;
         --primary-foreground: 0 0% 100%;
         --secondary: 240 6% 12%;
         --secondary-foreground: 210 40% 98%;
         --muted: 240 6% 12%;
         --muted-foreground: 240 5% 65%;
-        --accent: 292 84% 61%;
+        --accent: 188 86% 53%;
         --accent-foreground: 0 0% 100%;
         --destructive: 0 84% 60%;
         --destructive-foreground: 0 0% 98%;
         --border: 240 6% 14%;
         --input: 240 6% 14%;
-        --ring: 292 84% 61%;
+        --ring: 188 86% 53%;
         --radius: 0.75rem;
     }
 }
@@ -56,15 +56,15 @@ body {
 }
 
 .brand-text {
-    background: linear-gradient(120deg, #C084FC 0%, #EC4899 50%, #F97316 100%);
+    background: linear-gradient(120deg, #22D3EE 0%, #FB7185 50%, #FBBF24 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
 }
-.brand-bg { background: linear-gradient(120deg, #A855F7 0%, #EC4899 50%, #F97316 100%); }
-.brand-bg-hover:hover { background: linear-gradient(120deg, #C084FC 0%, #F472B6 50%, #FB923C 100%); }
-.brand-glow { box-shadow: 0 0 30px rgba(168, 85, 247, 0.35); }
-.brand-glow:hover { box-shadow: 0 0 50px rgba(236, 72, 153, 0.5); }
+.brand-bg { background: linear-gradient(120deg, #06B6D4 0%, #FB7185 50%, #FBBF24 100%); }
+.brand-bg-hover:hover { background: linear-gradient(120deg, #22D3EE 0%, #F9A8D4 50%, #FCD34D 100%); }
+.brand-glow { box-shadow: 0 0 30px rgba(6, 182, 212, 0.35); }
+.brand-glow:hover { box-shadow: 0 0 50px rgba(251, 113, 133, 0.5); }
 
 .glass {
     background: rgba(255,255,255,0.02);
@@ -83,7 +83,7 @@ body {
     color: #71717A;
 }
 
-::selection { background: rgba(236,72,153,0.4); color: #fff; }
+::selection { background: rgba(251, 113, 133,0.4); color: #fff; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: #06060B; }
 ::-webkit-scrollbar-thumb { background: #27272A; border-radius: 4px; }
@@ -125,8 +125,8 @@ body {
 .shape-face {
     position: absolute;
     inset: 0;
-    border: 1px solid rgba(168,85,247,0.4);
+    border: 1px solid rgba(6, 182, 212,0.4);
     border-radius: 20px;
-    background: linear-gradient(135deg, rgba(168,85,247,0.08), rgba(236,72,153,0.04));
+    background: linear-gradient(135deg, rgba(6, 182, 212,0.08), rgba(251, 113, 133,0.04));
     backdrop-filter: blur(20px);
 }

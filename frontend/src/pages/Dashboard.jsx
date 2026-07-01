@@ -25,7 +25,7 @@ export default function Dashboard() {
         <div className="mb-16 max-w-3xl fade-up">
           <div className="overline mb-4">Command center</div>
           <h1 className="font-heading font-light text-4xl sm:text-5xl tracking-tighter" data-testid="dashboard-greeting">
-            Welcome back, <span className="text-[#C084FC]">{user?.name?.split(" ")[0] || "there"}</span>.
+            Welcome back, <span className="text-[#22D3EE]">{user?.name?.split(" ")[0] || "there"}</span>.
           </h1>
           <p className="text-lg text-zinc-500 mt-4 leading-relaxed">Start with the Analyzer, then rewrite your resume for a specific job. Your edge — in four clicks.</p>
         </div>
@@ -36,18 +36,18 @@ export default function Dashboard() {
             const featured = f.featured;
             const cls = `group relative rounded-2xl border p-7 card-hover h-full ${
               disabled ? "opacity-40 cursor-not-allowed border-white/[0.06] bg-[#0A0A12]" :
-              featured ? "border-purple-400/25 bg-gradient-to-br from-purple-500/[0.06] to-transparent" :
+              featured ? "border-cyan-400/25 bg-gradient-to-br from-cyan-500/[0.06] to-transparent" :
               "border-white/[0.06] bg-[#0A0A12]"
             }`;
             const Inner = (
               <div className={cls}>
                 <div className="flex items-start justify-between mb-8">
-                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${featured ? "bg-[#C084FC]/10 text-[#C084FC]" : "bg-white/[0.03] text-zinc-400"}`}>
+                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${featured ? "bg-[#22D3EE]/10 text-[#22D3EE]" : "bg-white/[0.03] text-zinc-400"}`}>
                     {f.icon}
                   </div>
                   <div className="flex items-center gap-2">
                     {!f.live && <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">Soon</span>}
-                    {f.live && !disabled && <ArrowUpRight size={14} className="text-zinc-600 group-hover:text-[#C084FC] group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-all" strokeWidth={1.5}/>}
+                    {f.live && !disabled && <ArrowUpRight size={14} className="text-zinc-600 group-hover:text-[#22D3EE] group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-all" strokeWidth={1.5}/>}
                     <span className="font-mono text-xs text-zinc-700">{f.num}</span>
                   </div>
                 </div>
