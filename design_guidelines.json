@@ -1,133 +1,139 @@
 {
-  "theme_archetype": "Archetype 3 (Pastel & Soft) mixed with Neo-Brutalist Contrast (Light Theme)",
-  "design_philosophy": "A career platform tailored for job seekers and students, optimizing for approachability (pastels) but maintaining structure and authority (high-contrast neo-brutalist borders and offset shadows). Avoids the typical 'clinical SaaS' look.",
-  "color_palette": {
-    "background": "0 0% 98%",
-    "foreground": "0 0% 4%",
-    "card": "0 0% 100%",
-    "card_foreground": "0 0% 4%",
-    "primary": "54 100% 50%",
-    "primary_foreground": "0 0% 4%",
-    "secondary": "160 51% 70%",
-    "secondary_foreground": "0 0% 4%",
-    "muted": "0 0% 90%",
-    "muted_foreground": "0 0% 40%",
-    "accent": "270 50% 80%",
-    "accent_foreground": "0 0% 4%",
-    "border": "0 0% 4%",
-    "input": "0 0% 4%",
-    "ring": "0 0% 4%"
+  "theme": "Dark",
+  "archetype": "5 (Luxury / Premium Tech)",
+  "emotional_tone": "Credible, sophisticated, exclusive, commanding. It feels like a high-end financial or elite tech product (e.g., Linear, Superhuman), prioritizing focus, authority, and trust.",
+  "colors": {
+    "background": {
+      "primary": "#050505",
+      "secondary": "#0A0A0A",
+      "tertiary": "#121212"
+    },
+    "text": {
+      "primary": "#F8FAFC",
+      "secondary": "#A1A1AA",
+      "muted": "#52525B",
+      "inverse": "#050505"
+    },
+    "accent": {
+      "primary": "#D4AF37",
+      "primary_hover": "#FDE047",
+      "secondary": "#27272A"
+    },
+    "border": {
+      "default": "#27272A",
+      "subtle": "rgba(255, 255, 255, 0.05)"
+    },
+    "surface": {
+      "glass": "bg-black/40 backdrop-blur-2xl border border-white/10",
+      "solid": "bg-[#0A0A0A] border border-[#27272A]"
+    },
+    "status": {
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "error": "#EF4444"
+    }
   },
   "typography": {
-    "headings": {
-      "font": "Cabinet Grotesk, Outfit, or Archivo",
-      "style": "font-black tracking-tight"
-    },
-    "body": {
-      "font": "Satoshi, IBM Plex Sans, or DM Sans",
-      "style": "font-medium leading-relaxed"
+    "fonts": {
+      "heading": "'Cabinet Grotesk', 'Outfit', sans-serif",
+      "body": "'Manrope', sans-serif",
+      "mono": "'JetBrains Mono', monospace"
     },
     "scales": {
-      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tighter font-black",
-      "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight font-extrabold",
-      "h3": "text-xl sm:text-2xl font-bold",
-      "h4": "text-lg sm:text-xl font-bold",
-      "body": "text-base font-medium",
-      "labels": "text-sm font-bold uppercase tracking-[0.2em]"
+      "h1": "text-5xl sm:text-6xl lg:text-7xl font-medium tracking-tighter leading-[1.1]",
+      "h2": "text-3xl sm:text-4xl font-medium tracking-tight",
+      "h3": "text-xl sm:text-2xl font-medium tracking-tight",
+      "body": "text-base leading-relaxed text-zinc-400",
+      "small": "text-sm text-zinc-500",
+      "overline": "text-xs font-mono uppercase tracking-[0.2em] text-zinc-500"
     }
   },
   "spacing_and_layout": {
-    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
-    "bento_grid": "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6",
-    "card_padding": "p-6 md:p-8",
-    "section_spacing": "py-20 md:py-32",
-    "surface_strategy": "Neo-Brutalism: Elements have a 2px or 3px solid black border (border-2 border-foreground) and hard black offset shadows (shadow-[4px_4px_0px_rgba(0,0,0,1)]). Active/hover states translate down and right, removing the shadow to simulate pressing."
-  },
-  "components_strategy": {
-    "buttons": {
-      "primary": "bg-primary text-primary-foreground border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all font-bold px-6 py-3",
-      "secondary": "bg-secondary text-secondary-foreground border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all font-bold px-6 py-3"
-    },
-    "cards": {
-      "default": "bg-card border-2 border-foreground shadow-[6px_6px_0px_rgba(0,0,0,1)] rounded-none p-6",
-      "interactive": "bg-card border-2 border-foreground shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[8px_8px_0px_rgba(0,0,0,1)] transition-all rounded-none p-6 cursor-pointer"
-    },
-    "inputs": {
-      "default": "bg-white border-2 border-foreground px-4 py-3 focus:ring-0 focus:outline-none focus:border-foreground focus:shadow-[4px_4px_0px_rgba(0,0,0,1)] rounded-none text-base transition-all",
-      "upload_dropzone": "border-4 border-dashed border-foreground bg-accent/20 hover:bg-accent/40 p-12 flex flex-col items-center justify-center cursor-pointer transition-colors shadow-[4px_4px_0px_rgba(0,0,0,1)]"
-    },
-    "data_viz": {
-      "score_dial": "Use bold SVG circular progress with thick strokes (12px+). Stroke color based on score: Red (<50), Yellow (50-79), Mint Green (80+). Center text is large and bold."
-    },
-    "testing": "All interactive elements MUST include data-testid attribute (e.g., data-testid='upload-resume-button')."
-  },
-  "pages_blueprint": {
-    "landing_page": {
-      "hero": "Asymmetric layout. Left side: Massive H1 ('Crack the Code to Your Career'), subheadline, and Primary CTA ('Analyze Resume Now'). Right side: A 3D-like stack of brutalist cards (using images from media_assets) floating slightly.",
-      "value_prop": "A marquee (react-fast-marquee) running across the screen with thick black borders, displaying 'ATS OPTIMIZED • AI INTERVIEWS • REAL-TIME REWRITE • JOB MATCHING'.",
-      "features": "Bento grid of 4 major features. Each card uses a distinct pastel background (mint, lavender, yellow, white) with a solid black border."
-    },
-    "auth_pages": {
-      "layout": "Split screen. Left side: Solid pastel background with an inspiring career quote. Right side: Login/Register form inside a massive brutalist card."
-    },
-    "dashboard": {
-      "layout": "Sidebar navigation (black background, white text for contrast, or white with thick right border). Main content area uses a 'Control Room' dense grid but styled playfully.",
-      "feature_grid": "Grid of interactive cards for Resume Upload, Interview Prep, Resume Compare, Suggested Jobs, Roadmap, Career Advisor, Interview History, Job Matcher, Profile."
-    },
-    "resume_upload_ats_analysis": {
-      "layout": "Two-column after upload. Left: The massive upload dropzone or PDF preview. Right: The Scorecard. A huge score dial at the top, followed by 3 accordion sections (Pros, Cons, Suggested Changes)."
-    },
-    "real_time_resume_rewriter": {
-      "layout": "Three-pane or vertical split. Top: Input area for Job Description. Middle: Original Resume Viewer. Bottom/Right: Live AI rewrite output in a distinct highlighted box (pale yellow bg) with an 'Accept & Download' button."
-    },
-    "mock_interview_scorecard": {
-      "layout": "Certificate-style layout. Thick borders. Contains 4 metric dials (Communication, Technical, Confidence, Improvement). A 'Download PDF' floating action button.",
-      "visuals": "Use ASCII art or simple bold icons to represent each metric (e.g., a lightning bolt for technical accuracy)."
-    },
-    "skills_role_fit": {
-      "layout": "Input area for comma-separated skills (styled as tags). Below, a list of 'Recommended Roles' cards. Clicking a role reveals a 'Skills to Learn' checklist."
-    },
-    "job_suggestions": {
-      "layout": "A vertical feed of jobs. Each job is a wide, flat card with a 'Match Score' badge on the top right. High-contrast Apply buttons."
-    },
-    "profile": {
-      "layout": "Header with avatar and basic info. Below, tabs (using Shadcn Tabs customized with brutalist styles) for 'Saved Jobs', 'Interview History', and 'Account Settings'."
+    "philosophy": "Generous Spacing Philosophy. Utilize negative space to create a premium feel. Avoid cramming elements.",
+    "container_padding": "p-8 md:p-12",
+    "grid_gap": "gap-6 md:gap-8",
+    "border_radius": {
+      "sm": "rounded-md",
+      "md": "rounded-xl",
+      "lg": "rounded-2xl",
+      "full": "rounded-full"
     }
   },
-  "media_assets": {
-    "hero_images": [
-      {
-        "url": "https://images.unsplash.com/photo-1484788984921-03950022c9ef?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTJ8MHwxfHNlYXJjaHwxfHxzdHVkZW50JTIwbGFwdG9wJTIwY29mZmVlfGVufDB8fHx8MTc4Mjg4MzU0Nnww&ixlib=rb-4.1.0&q=85",
-        "description": "laptop computer beside coffee mug - use for landing page hero background or feature section",
-        "category": "hero"
-      },
-      {
-        "url": "https://images.unsplash.com/photo-1545239351-ef35f43d514b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTJ8MHwxfHNlYXJjaHwzfHxzdHVkZW50JTIwbGFwdG9wJTIwY29mZmVlfGVufDB8fHx8MTc4Mjg4MzU0Nnww&ixlib=rb-4.1.0&q=85",
-        "description": "person using MacBook Pro and holding cappuccino",
-        "category": "feature"
-      }
+  "components": {
+    "buttons": {
+      "primary": "bg-[#D4AF37] text-black hover:bg-[#FDE047] transition-all duration-300 font-medium px-6 py-3 rounded-xl shadow-[0_0_15px_rgba(212,175,55,0.2)] hover:shadow-[0_0_25px_rgba(212,175,55,0.4)]",
+      "secondary": "bg-transparent border border-white/10 text-white hover:bg-white/5 transition-all duration-300 font-medium px-6 py-3 rounded-xl",
+      "ghost": "hover:bg-white/5 text-zinc-400 hover:text-white transition-colors duration-200 px-4 py-2 rounded-lg"
+    },
+    "cards": {
+      "default": "bg-[#0A0A0A] border border-white/5 rounded-2xl p-6 hover:border-white/10 transition-colors duration-300 shadow-2xl shadow-black/50",
+      "glass": "bg-white/[0.02] backdrop-blur-xl border border-white/10 rounded-2xl p-8"
+    },
+    "inputs": {
+      "default": "bg-[#050505] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all outline-none placeholder:text-zinc-600"
+    },
+    "badges": {
+      "default": "bg-white/5 border border-white/10 text-zinc-300 px-2.5 py-1 rounded-full text-xs font-mono uppercase tracking-wider"
+    }
+  },
+  "motion": {
+    "hover": "transition-all duration-300 ease-out",
+    "entrance": "Use framer-motion for subtle fade-up (y: 20, opacity: 0 to 1) with spring transition (stiffness: 100, damping: 20).",
+    "micro_interactions": "scale-[0.98] on active state for buttons and interactive cards."
+  },
+  "icons": {
+    "library": "lucide-react",
+    "style": "stroke-[1.5] text-zinc-400"
+  },
+  "media": {
+    "hero_background": "https://images.pexels.com/photos/10927212/pexels-photo-10927212.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "sponsor_logos": [
+      "https://images.pexels.com/photos/21898300/pexels-photo-21898300.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "https://images.pexels.com/photos/26576975/pexels-photo-26576975.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
     ],
-    "interview_images": [
-      {
-        "url": "https://images.unsplash.com/photo-1573497620053-ea5300f94f21?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA4Mzl8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBpbnRlcnZpZXd8ZW58MHx8fHwxNzgyODgzNTQ3fDA&ixlib=rb-4.1.0&q=85",
-        "description": "two women sitting on chair (professional interview)",
-        "category": "mock_interview"
-      },
-      {
-        "url": "https://images.unsplash.com/photo-1698047681452-08eba22d0c64?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA4Mzl8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjBpbnRlcnZpZXd8ZW58MHx8fHwxNzgyODgzNTQ3fDA&ixlib=rb-4.1.0&q=85",
-        "description": "a woman sitting at a table with a piece of paper (reviewing resume)",
-        "category": "resume_review"
-      }
+    "avatars": [
+      "https://images.pexels.com/photos/31869537/pexels-photo-31869537.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "https://images.pexels.com/photos/36623225/pexels-photo-36623225.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
     ]
   },
-  "technical_instructions": {
-    "libraries_to_install": [
-      "lucide-react",
-      "react-fast-marquee",
-      "clsx",
-      "tailwind-merge"
-    ],
-    "components": "Custom HTML/Tailwind for Landing Page. Customized Shadcn components for Dashboard (Tables, Tabs, Accordion).",
-    "motion": "Use CSS transitions for hover effects. Avoid excessive staggered animations; focus on snappy, tactile interactions."
-  }
+  "page_blueprints": {
+    "landing": {
+      "hero": "Asymmetric layout. Left: Overline in mono, huge H1 in Cabinet Grotesk, elegant description, Primary + Secondary CTA. Right: A subtle floating glass card showing an 'ATS Score 98%' metric, backed by the dark graphite abstract texture image.",
+      "features": "Bento Grid (Control Room style). Tight gaps, mixing 1x1 and 2x2 cards. Use 1px subtle borders, solid dark surfaces, glowing amber accents on hover.",
+      "social_proof": "Editorial Ribbon marquee. Monospace font, ultra-slow scroll. 'TRUSTED BY AMBITIOUS TALENT AT' followed by minimal sponsor logos."
+    },
+    "auth": {
+      "layout": "Split-screen. Left: Clean, centered login/signup form. Right: Full-height dark graphite texture with a centered testimonial in italics (Manrope)."
+    },
+    "dashboard": {
+      "layout": "Sidebar navigation (glassmorphic or solid dark) with Main Content Area.",
+      "grid": "3x3 grid for the 9 feature cards. Minimalist data-vis style. 1px solid borders, no heavy shadows. JetBrains Mono for metrics."
+    },
+    "resume_analyzer": {
+      "layout": "Two-column. Left: Score dial (data-vis grade, thin strokes, gradient from zinc to amber). Right: Tabbed sections for breakdown, pros, cons. Use Shadcn Tabs, customized to look like pill buttons or minimal underlined text."
+    },
+    "ai_rewriter": {
+      "layout": "Side-by-side or stacked text areas. JD Input on left, Resume on right. 'Rewrite' button centered or floating at bottom. Output card highlights added keywords in subtle amber background (bg-[#D4AF37]/10 text-[#D4AF37])."
+    },
+    "skills_role_fit": {
+      "layout": "Input at top (tag-based). Results below in a bento grid. Top pick gets col-span-full or large emphasis. Learning roadmap as a vertical timeline using border-l border-white/10."
+    },
+    "job_matcher": {
+      "layout": "List view. Narrow, horizontal cards. Company logo, job title, match score (in JetBrains Mono), location. Hover state translates right by 4px and border highlights to white/20."
+    },
+    "profile": {
+      "layout": "Top section: Avatar, Name, Title. Below: Grid of skills and preferences. Clean, structured, form-like."
+    }
+  },
+  "instructions_to_main_agent": [
+    "Load Fonts in index.html or global css: @import url('https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@100,200,300,400,500,700,800,900&display=swap'); @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Manrope:wght@300;400;500;600;700&display=swap');",
+    "Configure tailwind.config.js to include the custom font families: sans: ['Manrope', 'sans-serif'], heading: ['Cabinet Grotesk', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'].",
+    "Set global body background to #050505 and text to #F8FAFC.",
+    "CRITICAL: Avoid any pastel colors, neo-brutalist shadows, or thick black borders. Stick to the 1px white/5 or white/10 borders.",
+    "CRITICAL: Do not use Inter or Space Grotesk.",
+    "CRITICAL: ALL interactive elements (buttons, inputs, links, tabs) MUST have a 'data-testid' attribute using kebab-case (e.g., data-testid='hero-cta-button').",
+    "Apply optical alignment over purely geometrical alignment where necessary.",
+    "Use lucide-react for icons with a stroke width of 1.5.",
+    "Use framer-motion for smooth, high-end transitions (no fast, bouncy, childish animations)."
+  ]
 }

@@ -1,72 +1,380 @@
-from fastapi import FastAPI, APIRouter
+"""TalentIQ backend - FastAPI + MongoDB + Claude Sonnet 4.5"""
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi.responses import Response
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
-import logging
-from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
+import io
+import json
 import uuid
-from datetime import datetime, timezone
+import logging
+import re
+from pathlib import Path
+from datetime import datetime, timezone, timedelta
+from typing import List, Optional
+from pydantic import BaseModel, Field, EmailStr
 
+import bcrypt
+import jwt as pyjwt
+from pypdf import PdfReader
+from docx import Document as DocxDocument
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.enums import TA_LEFT
+
+from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+# Config
+MONGO_URL = os.environ['MONGO_URL']
+DB_NAME = os.environ['DB_NAME']
+EMERGENT_LLM_KEY = os.environ['EMERGENT_LLM_KEY']
+JWT_SECRET = os.environ['JWT_SECRET']
+JWT_ALG = "HS256"
+CLAUDE_MODEL = ("anthropic", "claude-sonnet-4-5-20250929")
 
-# Create the main app without a prefix
-app = FastAPI()
+client = AsyncIOMotorClient(MONGO_URL)
+db = client[DB_NAME]
 
-# Create a router with the /api prefix
+app = FastAPI(title="TalentIQ API")
 api_router = APIRouter(prefix="/api")
+security = HTTPBearer()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("talentiq")
 
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+# ---------- Models ----------
+class SignupIn(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    role: Optional[str] = "student"  # student / job_seeker
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+class LoginIn(BaseModel):
+    email: EmailStr
+    password: str
 
-# Add your routes to the router instead of directly to app
+class UserOut(BaseModel):
+    id: str
+    name: str
+    email: EmailStr
+    role: str
+    target_role: Optional[str] = None
+    skills: List[str] = []
+
+class ProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    target_role: Optional[str] = None
+    skills: Optional[List[str]] = None
+
+class SkillsIn(BaseModel):
+    skills: List[str]
+    target_role: Optional[str] = None
+
+class RewriteIn(BaseModel):
+    resume_text: str
+    job_description: str
+
+
+# ---------- Helpers ----------
+def hash_pw(p: str) -> str:
+    return bcrypt.hashpw(p.encode(), bcrypt.gensalt()).decode()
+
+def verify_pw(p: str, h: str) -> bool:
+    try:
+        return bcrypt.checkpw(p.encode(), h.encode())
+    except Exception:
+        return False
+
+def make_token(uid: str) -> str:
+    payload = {"sub": uid, "exp": datetime.now(timezone.utc) + timedelta(days=30)}
+    return pyjwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
+
+async def get_current_user(cred: HTTPAuthorizationCredentials = Depends(security)):
+    try:
+        payload = pyjwt.decode(cred.credentials, JWT_SECRET, algorithms=[JWT_ALG])
+        uid = payload["sub"]
+    except Exception:
+        raise HTTPException(401, "Invalid token")
+    user = await db.users.find_one({"id": uid}, {"_id": 0, "password": 0})
+    if not user:
+        raise HTTPException(401, "User not found")
+    return user
+
+
+def extract_text_from_upload(filename: str, data: bytes) -> str:
+    name = filename.lower()
+    if name.endswith(".pdf"):
+        reader = PdfReader(io.BytesIO(data))
+        return "\n".join((p.extract_text() or "") for p in reader.pages).strip()
+    if name.endswith(".docx"):
+        doc = DocxDocument(io.BytesIO(data))
+        return "\n".join(p.text for p in doc.paragraphs).strip()
+    raise HTTPException(400, "Only PDF or DOCX supported")
+
+
+def parse_json_from_text(text: str) -> dict:
+    """Extract first JSON object from LLM output."""
+    # Try direct
+    try:
+        return json.loads(text)
+    except Exception:
+        pass
+    # Strip markdown fences
+    m = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+    if m:
+        try:
+            return json.loads(m.group(1))
+        except Exception:
+            pass
+    # Extract first { ... } block
+    m = re.search(r"\{.*\}", text, re.DOTALL)
+    if m:
+        try:
+            return json.loads(m.group(0))
+        except Exception:
+            pass
+    raise HTTPException(500, "AI response could not be parsed")
+
+
+async def call_claude_json(system: str, user_text: str) -> dict:
+    chat = LlmChat(
+        api_key=EMERGENT_LLM_KEY,
+        session_id=str(uuid.uuid4()),
+        system_message=system,
+    ).with_model(*CLAUDE_MODEL)
+    resp = await chat.send_message(UserMessage(text=user_text))
+    return parse_json_from_text(resp)
+
+
+# ---------- Auth Routes ----------
+@api_router.post("/auth/signup")
+async def signup(inp: SignupIn):
+    existing = await db.users.find_one({"email": inp.email.lower()})
+    if existing:
+        raise HTTPException(400, "Email already registered")
+    uid = str(uuid.uuid4())
+    doc = {
+        "id": uid,
+        "name": inp.name,
+        "email": inp.email.lower(),
+        "password": hash_pw(inp.password),
+        "role": inp.role or "student",
+        "target_role": None,
+        "skills": [],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.users.insert_one(doc)
+    return {"token": make_token(uid), "user": {k: doc[k] for k in ["id", "name", "email", "role", "target_role", "skills"]}}
+
+
+@api_router.post("/auth/login")
+async def login(inp: LoginIn):
+    user = await db.users.find_one({"email": inp.email.lower()})
+    if not user or not verify_pw(inp.password, user["password"]):
+        raise HTTPException(401, "Invalid credentials")
+    return {"token": make_token(user["id"]), "user": {k: user.get(k) for k in ["id", "name", "email", "role", "target_role", "skills"]}}
+
+
+@api_router.get("/auth/me")
+async def me(user=Depends(get_current_user)):
+    return {"user": {k: user.get(k) for k in ["id", "name", "email", "role", "target_role", "skills"]}}
+
+
+@api_router.put("/profile")
+async def update_profile(inp: ProfileUpdate, user=Depends(get_current_user)):
+    updates = {k: v for k, v in inp.model_dump().items() if v is not None}
+    if updates:
+        await db.users.update_one({"id": user["id"]}, {"$set": updates})
+    fresh = await db.users.find_one({"id": user["id"]}, {"_id": 0, "password": 0})
+    return {"user": {k: fresh.get(k) for k in ["id", "name", "email", "role", "target_role", "skills"]}}
+
+
+# ---------- Resume: ATS Analysis ----------
+ATS_SYSTEM = """You are an expert ATS (Applicant Tracking System) resume analyzer and career coach.
+Analyze the given resume and produce a strict JSON response only, no prose.
+Return JSON with EXACT keys:
+{
+  "ats_score": int (0-100),
+  "score_breakdown": {"formatting": int, "keywords": int, "impact": int, "clarity": int, "completeness": int},
+  "pros": [string, ...],
+  "cons": [string, ...],
+  "suggested_changes": [string, ...],
+  "detected_skills": [string, ...],
+  "experience_level": string (one of: "entry", "mid", "senior"),
+  "one_line_summary": string
+}
+Return ONLY the JSON object."""
+
+
+@api_router.post("/resume/analyze")
+async def analyze_resume(file: UploadFile = File(...), user=Depends(get_current_user)):
+    data = await file.read()
+    text = extract_text_from_upload(file.filename, data)
+    if not text or len(text) < 50:
+        raise HTTPException(400, "Could not extract enough text from resume")
+
+    result = await call_claude_json(ATS_SYSTEM, f"RESUME:\n{text}")
+
+    # Save
+    record = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "filename": file.filename,
+        "resume_text": text,
+        "analysis": result,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.resumes.insert_one(record)
+    # store latest skills on user if detected
+    detected = result.get("detected_skills", [])
+    if detected:
+        await db.users.update_one({"id": user["id"]}, {"$set": {"skills": list(set(user.get("skills", []) + detected))[:40]}})
+
+    return {"id": record["id"], "resume_text": text, "analysis": result}
+
+
+@api_router.get("/resume/latest")
+async def latest_resume(user=Depends(get_current_user)):
+    r = await db.resumes.find_one({"user_id": user["id"]}, {"_id": 0}, sort=[("created_at", -1)])
+    if not r:
+        return {"resume": None}
+    return {"resume": r}
+
+
+# ---------- Resume Rewriter ----------
+REWRITE_SYSTEM = """You are an expert resume writer. Rewrite the given resume to better match the target job description.
+Return STRICT JSON only with EXACT keys:
+{
+  "rewritten_resume": string (full plaintext resume optimized for ATS with clear sections: Summary, Skills, Experience, Education, Projects),
+  "improvements": [string, ...],
+  "keywords_added": [string, ...],
+  "match_score_before": int (0-100),
+  "match_score_after": int (0-100)
+}
+Rewrite must preserve truthful facts (companies, dates, education) but improve wording, keywords, quantify impact, and align with the JD.
+Return ONLY the JSON object."""
+
+
+@api_router.post("/resume/rewrite")
+async def rewrite_resume(inp: RewriteIn, user=Depends(get_current_user)):
+    if len(inp.resume_text) < 30 or len(inp.job_description) < 20:
+        raise HTTPException(400, "Resume and job description are required")
+    user_msg = f"JOB DESCRIPTION:\n{inp.job_description}\n\nORIGINAL RESUME:\n{inp.resume_text}"
+    result = await call_claude_json(REWRITE_SYSTEM, user_msg)
+    record = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "job_description": inp.job_description,
+        "original": inp.resume_text,
+        "result": result,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.rewrites.insert_one(record)
+    return {"id": record["id"], **result}
+
+
+@api_router.post("/resume/rewrite/pdf")
+async def rewrite_pdf(payload: dict, user=Depends(get_current_user)):
+    text = payload.get("text", "").strip()
+    if not text:
+        raise HTTPException(400, "Text is required")
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=letter, leftMargin=0.75*inch, rightMargin=0.75*inch,
+                            topMargin=0.75*inch, bottomMargin=0.75*inch)
+    styles = getSampleStyleSheet()
+    body_style = ParagraphStyle('body', parent=styles['Normal'], fontName='Helvetica', fontSize=10.5, leading=14, alignment=TA_LEFT)
+    heading_style = ParagraphStyle('h', parent=styles['Heading2'], fontName='Helvetica-Bold', fontSize=13, spaceAfter=6, spaceBefore=10)
+    story = []
+    for line in text.split("\n"):
+        line = line.rstrip()
+        if not line.strip():
+            story.append(Spacer(1, 6))
+            continue
+        # Treat ALL CAPS or lines ending with ':' as headings
+        stripped = line.strip()
+        if (stripped.isupper() and len(stripped) < 60) or (stripped.endswith(":") and len(stripped) < 40):
+            story.append(Paragraph(stripped.replace("&", "&amp;"), heading_style))
+        else:
+            story.append(Paragraph(stripped.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"), body_style))
+    doc.build(story)
+    pdf = buf.getvalue()
+    return Response(content=pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": 'attachment; filename="talentiq_resume.pdf"'})
+
+
+# ---------- Skills / Role Fit / Jobs ----------
+ROLE_FIT_SYSTEM = """You are a senior career advisor. Given a user's skills and optional target role, recommend the best roles and a learning path.
+Return STRICT JSON only with EXACT keys:
+{
+  "recommended_roles": [
+    {"role": string, "fit_score": int (0-100), "why": string, "skills_matched": [string, ...], "skills_to_learn": [string, ...]}
+  ],
+  "top_pick": string,
+  "learning_roadmap": [ {"step": int, "title": string, "duration": string, "resources": [string, ...]} ]
+}
+Provide 4-6 recommended_roles and 5-7 learning_roadmap steps. Return ONLY the JSON object."""
+
+
+@api_router.post("/skills/analyze")
+async def analyze_skills(inp: SkillsIn, user=Depends(get_current_user)):
+    if not inp.skills:
+        raise HTTPException(400, "Skills are required")
+    # persist
+    await db.users.update_one({"id": user["id"]}, {"$set": {"skills": inp.skills, "target_role": inp.target_role}})
+    user_msg = f"SKILLS: {', '.join(inp.skills)}\nTARGET ROLE (optional): {inp.target_role or 'not specified'}"
+    result = await call_claude_json(ROLE_FIT_SYSTEM, user_msg)
+    return result
+
+
+JOBS_SYSTEM = """You are a job market expert. Based on the user's skills, experience level, and resume (if any), generate 6 realistic, diverse job opportunities that would be a good match.
+Return STRICT JSON only:
+{
+  "jobs": [
+    {
+      "title": string,
+      "company": string,
+      "location": string,
+      "type": "Full-time" | "Internship" | "Contract",
+      "salary_range": string,
+      "match_score": int (0-100),
+      "match_reason": string,
+      "key_requirements": [string, ...],
+      "why_you_fit": string
+    }
+  ]
+}
+Companies must be varied and realistic (mix of well-known tech companies and startups). Return ONLY the JSON object."""
+
+
+@api_router.post("/jobs/suggest")
+async def suggest_jobs(user=Depends(get_current_user)):
+    skills = user.get("skills", [])
+    target = user.get("target_role", "")
+    latest = await db.resumes.find_one({"user_id": user["id"]}, sort=[("created_at", -1)])
+    resume_snippet = (latest.get("resume_text", "")[:1500] if latest else "")
+    exp_level = ((latest or {}).get("analysis", {}) or {}).get("experience_level", "entry")
+    if not skills and not resume_snippet:
+        raise HTTPException(400, "Add skills or upload a resume first")
+
+    prompt = f"SKILLS: {', '.join(skills) or 'none'}\nTARGET ROLE: {target or 'flexible'}\nEXPERIENCE LEVEL: {exp_level}\nRESUME SNIPPET:\n{resume_snippet}"
+    result = await call_claude_json(JOBS_SYSTEM, prompt)
+    return result
+
+
+# ---------- Health ----------
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"service": "TalentIQ", "status": "ok"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
-    
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    
-    return status_checks
-
-# Include the router in the main app
 app.include_router(api_router)
 
 app.add_middleware(
@@ -77,12 +385,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
