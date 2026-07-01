@@ -1,35 +1,41 @@
 import React from "react";
 
-export default function ScoreDial({ score = 0, size = 180, label = "ATS Score" }) {
+export default function ScoreDial({ score = 0, size = 200, label = "ATS Score" }) {
   const s = Math.max(0, Math.min(100, score));
-  const stroke = 14;
+  const stroke = 6;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const offset = c - (s / 100) * c;
-  const color = s >= 80 ? "hsl(152, 60%, 45%)" : s >= 50 ? "hsl(38, 92%, 55%)" : "hsl(0, 84%, 55%)";
+  // Interpolate zinc -> amber
+  const color = s >= 80 ? "#D4AF37" : s >= 50 ? "#F59E0B" : "#71717A";
 
   return (
-    <div className="inline-flex flex-col items-center gap-2" data-testid="score-dial">
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} stroke="#000" strokeWidth={stroke} fill="none" opacity={0.08} />
+    <div className="relative inline-flex items-center justify-center" data-testid="score-dial" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90 absolute inset-0">
+        <defs>
+          <linearGradient id="dialGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#71717A" />
+            <stop offset="100%" stopColor={color} />
+          </linearGradient>
+        </defs>
+        <circle cx={size / 2} cy={size / 2} r={r} stroke="rgba(255,255,255,0.05)" strokeWidth={stroke} fill="none" />
         <circle
           cx={size / 2}
           cy={size / 2}
           r={r}
-          stroke={color}
+          stroke="url(#dialGrad)"
           strokeWidth={stroke}
           fill="none"
           strokeDasharray={c}
           strokeDashoffset={offset}
-          strokeLinecap="butt"
-          style={{ transition: "stroke-dashoffset 700ms ease" }}
+          strokeLinecap="round"
+          style={{ transition: "stroke-dashoffset 1s cubic-bezier(0.16, 1, 0.3, 1)" }}
         />
       </svg>
-      <div className="-mt-[calc(50%+8px)] text-center pointer-events-none" style={{ marginTop: -(size / 2 + 24) }}>
-        <div className="font-display font-black text-5xl" data-testid="score-value">{s}</div>
-        <div className="text-[10px] tracking-[0.25em] font-bold uppercase">{label}</div>
+      <div className="text-center relative z-10">
+        <div className="font-heading font-light text-6xl tracking-tighter" data-testid="score-value">{s}</div>
+        <div className="overline mt-1">{label}</div>
       </div>
-      <div style={{ height: size / 2 - 20 }} />
     </div>
   );
 }

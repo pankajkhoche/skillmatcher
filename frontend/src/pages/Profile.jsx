@@ -20,7 +20,7 @@ export default function Profile() {
     try {
       const r = await api.put("/profile", { name, target_role: targetRole });
       updateUser(r.data.user);
-      toast.success("Profile saved");
+      toast.success("Saved");
     } catch (e) {
       toast.error(e.response?.data?.detail || "Save failed");
     } finally { setSaving(false); }
@@ -29,35 +29,35 @@ export default function Profile() {
   const initials = (user?.name || "?").split(" ").map(s=>s[0]).join("").slice(0,2).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[hsl(48,30%,96%)]">
+    <div className="min-h-screen bg-[#050505] text-white">
       <Nav />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="brut-card p-8 bg-white mb-6">
-          <div className="flex items-center gap-5">
-            <div className="w-20 h-20 border-2 border-black bg-[hsl(54,100%,50%)] brut-shadow-sm flex items-center justify-center font-display font-black text-3xl" data-testid="profile-avatar">{initials}</div>
+      <div className="max-w-4xl mx-auto px-6 lg:px-8 py-14">
+        <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-8 mb-4">
+          <div className="flex items-center gap-6">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#8B7318] flex items-center justify-center font-heading font-medium text-2xl text-black" data-testid="profile-avatar">{initials}</div>
             <div>
-              <h1 className="font-display font-black text-3xl">{user?.name}</h1>
-              <p className="text-sm">{user?.email}</p>
-              <div className="mt-1 text-xs font-bold uppercase tracking-wider">{user?.role === "job_seeker" ? "Job Seeker" : "Student"}</div>
+              <h1 className="font-heading text-3xl font-light tracking-tight">{user?.name}</h1>
+              <p className="text-sm text-zinc-500">{user?.email}</p>
+              <div className="overline mt-2">{user?.role === "job_seeker" ? "Professional" : "Student"}</div>
             </div>
           </div>
         </div>
 
-        <div className="brut-card p-6 bg-white mb-6">
-          <h2 className="font-display font-black text-xl mb-4">Details</h2>
-          <label className="block text-xs font-bold uppercase tracking-[0.2em] mb-2">Full Name</label>
-          <input data-testid="profile-name" value={name} onChange={(e)=>setName(e.target.value)} className="w-full border-2 border-black px-4 py-3 mb-4 bg-white"/>
-          <label className="block text-xs font-bold uppercase tracking-[0.2em] mb-2">Target Role</label>
-          <input data-testid="profile-target-role" value={targetRole} onChange={(e)=>setTargetRole(e.target.value)} placeholder="e.g. Software Engineer" className="w-full border-2 border-black px-4 py-3 bg-white"/>
-          <button onClick={save} disabled={saving} data-testid="profile-save" className="brut-btn bg-yellow-300 px-6 py-2.5 mt-5">{saving ? "Saving..." : "Save changes"}</button>
+        <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-8 mb-4">
+          <div className="overline mb-6">Details</div>
+          <label className="overline block mb-2">Full name</label>
+          <input data-testid="profile-name" value={name} onChange={(e)=>setName(e.target.value)} className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3 mb-5 focus:border-[#D4AF37]/50 transition-colors"/>
+          <label className="overline block mb-2">Target role</label>
+          <input data-testid="profile-target-role" value={targetRole} onChange={(e)=>setTargetRole(e.target.value)} placeholder="Software Engineer" className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3 focus:border-[#D4AF37]/50 transition-colors placeholder:text-zinc-700"/>
+          <button onClick={save} disabled={saving} data-testid="profile-save" className="bg-[#D4AF37] text-black font-medium px-6 py-2.5 mt-6 rounded-xl hover:bg-[#FDE047] transition-all gold-glow disabled:opacity-40">{saving ? "Saving…" : "Save changes"}</button>
         </div>
 
         {user?.skills?.length > 0 && (
-          <div className="brut-card p-6 bg-white">
-            <h2 className="font-display font-black text-xl mb-4">Your Skills</h2>
-            <div className="flex flex-wrap gap-2" data-testid="profile-skills">
+          <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-8">
+            <div className="overline mb-4">Your skills</div>
+            <div className="flex flex-wrap gap-1.5" data-testid="profile-skills">
               {user.skills.map((s) => (
-                <span key={s} className="border-2 border-black bg-[hsl(270,60%,82%)] px-3 py-1 font-bold text-sm">{s}</span>
+                <span key={s} className="text-xs px-3 py-1.5 rounded-md bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 font-mono">{s}</span>
               ))}
             </div>
           </div>

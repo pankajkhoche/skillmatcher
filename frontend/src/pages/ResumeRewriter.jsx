@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import Nav from "@/components/Nav";
 import api from "@/lib/api";
 import { toast } from "sonner";
-import { Sparkles, Download, ArrowRight } from "lucide-react";
+import { Sparkles, Download, ArrowRight, ArrowUpRight } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
 export default function ResumeRewriter() {
@@ -14,7 +14,6 @@ export default function ResumeRewriter() {
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
-    // Pre-fill from analyze page or from latest resume
     if (loc.state?.resumeText) {
       setResumeText(loc.state.resumeText);
     } else {
@@ -32,7 +31,7 @@ export default function ResumeRewriter() {
     try {
       const r = await api.post("/resume/rewrite", { resume_text: resumeText, job_description: jd }, { timeout: 120000 });
       setResult(r.data);
-      toast.success("Rewritten!");
+      toast.success("Rewritten");
     } catch (e) {
       toast.error(e.response?.data?.detail || "Rewrite failed");
     } finally { setLoading(false); }
@@ -49,96 +48,105 @@ export default function ResumeRewriter() {
       a.download = "talentiq_resume.pdf";
       document.body.appendChild(a); a.click(); a.remove();
       window.URL.revokeObjectURL(url);
-      toast.success("Downloaded!");
+      toast.success("Downloaded");
     } catch (e) {
       toast.error("PDF failed");
     } finally { setDownloading(false); }
   };
 
   return (
-    <div className="min-h-screen bg-[hsl(48,30%,96%)]">
+    <div className="min-h-screen bg-[#050505] text-white">
       <Nav />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="mb-6">
-          <div className="text-xs font-bold tracking-[0.2em] uppercase mb-2">Real-time Resume Rewriter</div>
-          <h1 className="font-display font-black text-4xl sm:text-5xl tracking-tight">One resume. Any job. Perfectly tuned.</h1>
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14">
+        <div className="mb-10 max-w-3xl">
+          <div className="overline mb-3">Real-time rewriter</div>
+          <h1 className="font-heading font-light text-4xl sm:text-5xl tracking-tighter">One resume. Any job. <span className="text-[#D4AF37] italic">Perfectly tuned.</span></h1>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Left: inputs */}
           <div className="space-y-4">
-            <div className="brut-card p-5 bg-white">
-              <label className="block text-xs font-bold uppercase tracking-[0.2em] mb-2">Job Description</label>
+            <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-6">
+              <label className="overline block mb-3">Job description</label>
               <textarea
                 data-testid="rewriter-jd"
                 value={jd}
                 onChange={(e)=>setJd(e.target.value)}
-                placeholder="Paste the job description here..."
-                className="w-full border-2 border-black p-3 min-h-[180px] bg-white text-sm"
+                placeholder="Paste the target job description here..."
+                className="w-full bg-transparent border border-white/10 rounded-xl p-4 min-h-[200px] text-sm focus:border-[#D4AF37]/50 transition-colors placeholder:text-zinc-700 leading-relaxed"
               />
             </div>
-            <div className="brut-card p-5 bg-white">
-              <label className="block text-xs font-bold uppercase tracking-[0.2em] mb-2">Your Resume (text)</label>
+            <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-6">
+              <label className="overline block mb-3">Your resume</label>
               <textarea
                 data-testid="rewriter-resume"
                 value={resumeText}
                 onChange={(e)=>setResumeText(e.target.value)}
-                placeholder="Paste your resume here, or upload one on the Analyzer page..."
-                className="w-full border-2 border-black p-3 min-h-[220px] bg-white text-sm"
+                placeholder="Paste your resume text, or upload one on the Analyzer page..."
+                className="w-full bg-transparent border border-white/10 rounded-xl p-4 min-h-[240px] text-sm focus:border-[#D4AF37]/50 transition-colors placeholder:text-zinc-700 leading-relaxed"
               />
             </div>
-            <button onClick={rewrite} disabled={loading} data-testid="rewriter-submit" className="brut-btn bg-yellow-300 w-full py-3 inline-flex items-center justify-center gap-2 text-base">
-              {loading ? "Rewriting with Claude..." : (<><Sparkles size={16}/> Rewrite for this job</>)}
+            <button onClick={rewrite} disabled={loading} data-testid="rewriter-submit" className="w-full bg-[#D4AF37] text-black font-medium py-3.5 rounded-xl hover:bg-[#FDE047] transition-all gold-glow inline-flex items-center justify-center gap-2 disabled:opacity-40">
+              {loading ? "Rewriting…" : (<><Sparkles size={16} strokeWidth={2}/> Rewrite for this job</>)}
             </button>
           </div>
 
-          {/* Right: output */}
           <div>
             {!result && !loading && (
-              <div className="brut-card p-8 h-full flex items-center justify-center bg-white text-center">
+              <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-12 h-full flex items-center justify-center text-center">
                 <div>
-                  <div className="w-16 h-16 bg-[hsl(160,51%,70%)] border-2 border-black brut-shadow-sm mx-auto mb-4 flex items-center justify-center"><ArrowRight/></div>
-                  <p className="font-bold">Your rewritten resume will appear here.</p>
+                  <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/10 mx-auto mb-4 flex items-center justify-center">
+                    <ArrowRight size={22} className="text-zinc-500" strokeWidth={1.5}/>
+                  </div>
+                  <p className="text-zinc-500">Your rewritten resume will appear here.</p>
                 </div>
               </div>
             )}
-            {loading && <div className="brut-card p-8 text-center animate-pulse font-display font-black text-2xl">Crafting your rewrite…</div>}
+            {loading && (
+              <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-12 text-center animate-pulse">
+                <div className="font-heading text-2xl font-light text-zinc-400">Crafting your rewrite…</div>
+                <div className="overline mt-3">Claude Sonnet 4.5</div>
+              </div>
+            )}
             {result && (
-              <div className="space-y-4" data-testid="rewriter-result">
-                <div className="brut-card p-5 bg-[hsl(160,51%,70%)]">
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="text-xs font-bold tracking-[0.2em] uppercase">Match Score</div>
-                    <div className="font-display font-black">
-                      <span className="line-through opacity-50 text-xl mr-2">{result.match_score_before}</span>
-                      <span className="text-3xl">{result.match_score_after}</span>
-                      <span className="text-sm ml-1">/100</span>
-                    </div>
+              <div className="space-y-4 fade-up" data-testid="rewriter-result">
+                <div className="rounded-2xl border border-[#D4AF37]/20 bg-gradient-to-br from-[#D4AF37]/[0.06] to-transparent p-6">
+                  <div className="overline mb-3">Match score</div>
+                  <div className="flex items-baseline gap-3 mb-5">
+                    <span className="font-heading text-2xl text-zinc-600 line-through">{result.match_score_before}</span>
+                    <ArrowRight size={16} className="text-zinc-500"/>
+                    <span className="font-heading text-5xl font-light text-[#D4AF37]">{result.match_score_after}</span>
+                    <span className="font-mono text-sm text-zinc-500">/100</span>
                   </div>
                   {result.keywords_added?.length > 0 && (
                     <div>
-                      <div className="text-xs font-bold uppercase mb-1">Keywords Added</div>
+                      <div className="overline mb-2">Keywords added</div>
                       <div className="flex flex-wrap gap-1.5">
-                        {result.keywords_added.map((k,i)=>(<span key={i} className="text-xs px-2 py-0.5 border-2 border-black bg-white font-bold">{k}</span>))}
+                        {result.keywords_added.map((k,i)=>(<span key={i} className="text-xs px-2.5 py-1 rounded-md bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 font-mono">{k}</span>))}
                       </div>
                     </div>
                   )}
                 </div>
 
-                <div className="brut-card bg-[hsl(54,100%,90%)] p-5">
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="text-xs font-bold tracking-[0.2em] uppercase">Rewritten Resume</div>
-                    <button onClick={download} disabled={downloading} data-testid="rewriter-download" className="brut-btn bg-black text-white text-xs px-3 py-1.5 inline-flex items-center gap-1">
-                      <Download size={14}/> {downloading ? "..." : "Download PDF"}
+                <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="overline">Rewritten resume</div>
+                    <button onClick={download} disabled={downloading} data-testid="rewriter-download" className="bg-white/[0.03] border border-white/10 hover:border-[#D4AF37]/40 hover:text-[#D4AF37] text-zinc-300 text-xs font-medium px-3 py-1.5 rounded-lg transition-all inline-flex items-center gap-1.5">
+                      <Download size={12} strokeWidth={1.5}/> {downloading ? "..." : "Download PDF"}
                     </button>
                   </div>
-                  <pre className="whitespace-pre-wrap text-sm font-mono bg-white border-2 border-black p-4 max-h-[420px] overflow-auto">{result.rewritten_resume}</pre>
+                  <pre className="whitespace-pre-wrap text-sm font-mono text-zinc-300 bg-black/40 border border-white/[0.06] rounded-xl p-5 max-h-[460px] overflow-auto leading-relaxed">{result.rewritten_resume}</pre>
                 </div>
 
                 {result.improvements?.length > 0 && (
-                  <div className="brut-card p-5 bg-white">
-                    <div className="text-xs font-bold tracking-[0.2em] uppercase mb-2">What changed</div>
-                    <ul className="space-y-1.5 text-sm">
-                      {result.improvements.map((it,i)=>(<li key={i} className="flex gap-2"><span className="font-bold">✓</span>{it}</li>))}
+                  <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-6">
+                    <div className="overline mb-3">What changed</div>
+                    <ul className="space-y-2 text-sm text-zinc-400">
+                      {result.improvements.map((it,i)=>(
+                        <li key={i} className="flex gap-3">
+                          <span className="text-[#D4AF37] font-mono text-xs mt-0.5">{String(i+1).padStart(2,"0")}</span>
+                          <span className="leading-relaxed">{it}</span>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 )}

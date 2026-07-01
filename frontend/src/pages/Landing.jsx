@@ -1,125 +1,162 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import Nav from "@/components/Nav";
-import { FileText, Sparkles, Target, Briefcase, Zap, Award } from "lucide-react";
+import { FileText, Sparkles, Target, Briefcase, ArrowUpRight, Zap, Award, TrendingUp } from "lucide-react";
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-[hsl(48,30%,96%)]">
-      <Nav />
-
-      {/* HERO */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-24">
-        <div className="grid lg:grid-cols-12 gap-10 items-center">
-          <div className="lg:col-span-7">
-            <div className="inline-block bg-[hsl(270,60%,82%)] border-2 border-black px-3 py-1 mb-6 brut-shadow-sm">
-              <span className="text-xs font-bold tracking-[0.2em] uppercase">Built for students & job seekers</span>
-            </div>
-            <h1 className="font-display font-black text-5xl sm:text-6xl lg:text-7xl leading-[0.95] tracking-tighter mb-6" data-testid="landing-title">
-              Crack the code<br/> to your <span className="bg-yellow-300 border-2 border-black px-3 inline-block -rotate-1">career.</span>
-            </h1>
-            <p className="text-lg sm:text-xl max-w-xl mb-8 text-black/75">
-              Upload your resume. Get an instant ATS score, an AI-rewrite tuned to any job, and know exactly which roles fit you — all in one tool.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Link to="/signup" data-testid="hero-cta-signup" className="brut-btn bg-yellow-300 px-6 py-3 text-base inline-flex items-center gap-2">
-                <Sparkles size={18}/> Analyze my resume
-              </Link>
-              <Link to="/login" data-testid="hero-cta-login" className="brut-btn bg-white px-6 py-3 text-base">I have an account</Link>
-            </div>
-            <div className="mt-8 flex items-center gap-3 text-sm">
-              <div className="flex -space-x-2">
-                {["#FEE440","#A0E7D1","#D6BCF7"].map((c,i)=>(
-                  <div key={i} className="w-8 h-8 border-2 border-black rounded-full" style={{background:c}}/>
-                ))}
-              </div>
-              <span className="font-bold">Trusted by 10,000+ ambitious job seekers</span>
-            </div>
-          </div>
-
-          <div className="lg:col-span-5 relative">
-            <div className="relative">
-              <div className="brut-card p-6 rotate-2">
-                <div className="flex justify-between mb-3">
-                  <span className="text-xs font-bold tracking-[0.2em] uppercase">ATS Report</span>
-                  <span className="bg-[hsl(152,60%,45%)] text-white text-xs px-2 py-0.5 border-2 border-black font-bold">LIVE</span>
-                </div>
-                <div className="text-7xl font-display font-black">87<span className="text-2xl">/100</span></div>
-                <div className="mt-4 space-y-1.5 text-sm">
-                  <div className="flex justify-between"><span>Keywords</span><span className="font-bold">92</span></div>
-                  <div className="flex justify-between"><span>Impact</span><span className="font-bold">78</span></div>
-                  <div className="flex justify-between"><span>Formatting</span><span className="font-bold">95</span></div>
-                </div>
-              </div>
-              <div className="brut-card p-4 -rotate-3 absolute -bottom-8 -left-6 w-64 bg-[hsl(160,51%,70%)]">
-                <div className="text-xs font-bold tracking-[0.2em] uppercase mb-2">Top Role Match</div>
-                <div className="font-display font-black text-xl">Frontend Engineer</div>
-                <div className="text-sm mt-1">94% fit · 5 skills to learn</div>
-              </div>
-              <div className="brut-card p-3 rotate-6 absolute -top-6 -right-4 bg-yellow-300">
-                <Zap size={20} className="inline mr-1"/> <span className="font-bold text-sm">Rewritten in 8s</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Marquee */}
-      <div className="border-y-2 border-black bg-black text-white py-4 marquee">
-        <div className="marquee-track font-display font-black text-2xl">
-          {Array.from({length:2}).map((_,i)=>(
-            <div key={i} className="flex items-center gap-12">
-              <span>ATS OPTIMIZED</span><span>★</span>
-              <span>AI INTERVIEWS</span><span>★</span>
-              <span>REAL-TIME REWRITE</span><span>★</span>
-              <span>ROLE FIT</span><span>★</span>
-              <span>JOB MATCHING</span><span>★</span>
-              <span>SKILL ROADMAP</span><span>★</span>
-            </div>
-          ))}
-        </div>
+    <div className="min-h-screen bg-[#050505] text-white relative overflow-hidden">
+      {/* Ambient background */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#D4AF37]/[0.06] rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-[#D4AF37]/[0.04] rounded-full blur-[100px]" />
       </div>
 
-      {/* Features Bento */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="max-w-2xl mb-12">
-          <div className="text-xs font-bold tracking-[0.2em] uppercase mb-3">What you get</div>
-          <h2 className="font-display font-black text-4xl sm:text-5xl tracking-tight">Four tools. One unfair advantage.</h2>
-        </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <FeatureCard bg="hsl(54, 100%, 50%)" icon={<FileText />} title="ATS Resume Analyzer" desc="Get a score, pros, cons, and precise suggestions. Know exactly what recruiters see."/>
-          <FeatureCard bg="hsl(160, 51%, 70%)" icon={<Sparkles />} title="Real-Time Rewriter" desc="Paste any job description. Watch your resume get rewritten to match — download as PDF."/>
-          <FeatureCard bg="hsl(270, 60%, 82%)" icon={<Target />} title="Skill Role Fit" desc="Enter your skills, see which roles fit best, and get a step-by-step learning roadmap."/>
-          <FeatureCard bg="white" icon={<Briefcase />} title="Smart Job Matches" desc="Get personalized job suggestions ranked by match score against your resume & skills."/>
-        </div>
-      </section>
+      <div className="relative">
+        <Nav />
 
-      {/* CTA */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
-        <div className="brut-card brut-shadow-lg p-12 md:p-16 bg-yellow-300 text-center">
-          <Award className="mx-auto mb-4" size={40}/>
-          <h2 className="font-display font-black text-4xl sm:text-5xl mb-4 tracking-tight">Stop guessing. Start landing.</h2>
-          <p className="text-lg max-w-xl mx-auto mb-8">TalentIQ turns your resume into a machine-optimized weapon — for free, in seconds.</p>
-          <Link to="/signup" data-testid="cta-signup" className="brut-btn bg-black text-white px-8 py-4 text-lg inline-block">Get started free →</Link>
-        </div>
-      </section>
+        {/* HERO */}
+        <section className="max-w-7xl mx-auto px-6 lg:px-8 pt-24 pb-32">
+          <div className="grid lg:grid-cols-12 gap-16 items-center">
+            <div className="lg:col-span-7 fade-up">
+              <div className="overline mb-8">— For ambitious talent</div>
+              <h1 className="font-heading font-light text-5xl sm:text-6xl lg:text-7xl tracking-tighter leading-[1.02] mb-8">
+                Your career, <br />
+                engineered by <span className="text-[#D4AF37] italic font-normal">intelligence.</span>
+              </h1>
+              <p className="text-lg text-zinc-400 max-w-xl mb-10 leading-relaxed">
+                Instant ATS analysis. AI-rewritten resumes tuned to any job. Precision role-fit intelligence. TalentIQ is the operating system for professionals who take their trajectory seriously.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link to="/signup" data-testid="hero-cta-signup" className="group bg-[#D4AF37] text-black font-medium px-6 py-3.5 rounded-xl transition-all duration-300 hover:bg-[#FDE047] gold-glow inline-flex items-center gap-2">
+                  Analyze your resume <ArrowUpRight size={16} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={2} />
+                </Link>
+                <Link to="/login" data-testid="hero-cta-login" className="border border-white/10 text-white font-medium px-6 py-3.5 rounded-xl transition-all duration-300 hover:bg-white/[0.03] hover:border-white/20">
+                  I have an account
+                </Link>
+              </div>
+              <div className="mt-14 flex items-center gap-8 text-sm text-zinc-500">
+                <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"/> <span className="font-mono uppercase tracking-wider text-xs">Live</span></div>
+                <span>10,000+ profiles optimized</span>
+                <span className="hidden md:inline">·</span>
+                <span className="hidden md:inline">Claude Sonnet 4.5</span>
+              </div>
+            </div>
 
-      <footer className="border-t-2 border-black bg-[hsl(48,30%,96%)] py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-sm flex justify-between">
-          <span className="font-bold">© 2026 TalentIQ</span>
-          <span>Built with intent, not templates.</span>
+            <div className="lg:col-span-5 relative fade-up" style={{ animationDelay: "0.1s" }}>
+              <div className="relative">
+                {/* Main glass card */}
+                <div className="glass rounded-2xl p-8 relative overflow-hidden">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="overline">ATS Report</div>
+                    <div className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-emerald-400">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Live
+                    </div>
+                  </div>
+                  <div className="font-heading font-light text-7xl tracking-tighter mb-2">
+                    <span className="text-[#D4AF37]">87</span><span className="text-3xl text-zinc-600">/100</span>
+                  </div>
+                  <div className="text-sm text-zinc-500 mb-6">Senior Software Engineer</div>
+                  <div className="space-y-3">
+                    {[["Keywords", 92], ["Impact", 78], ["Formatting", 95], ["Clarity", 84]].map(([k, v]) => (
+                      <div key={k}>
+                        <div className="flex justify-between text-sm mb-1.5">
+                          <span className="text-zinc-500">{k}</span>
+                          <span className="font-mono text-zinc-300">{v}</span>
+                        </div>
+                        <div className="h-[3px] bg-white/5 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-[#D4AF37]/50 to-[#D4AF37]" style={{ width: `${v}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Small overlay card */}
+                <div className="glass rounded-xl p-4 absolute -bottom-8 -left-8 w-64 ring-gold">
+                  <div className="flex items-center gap-2 mb-1">
+                    <TrendingUp size={14} className="text-[#D4AF37]" strokeWidth={2} />
+                    <div className="overline">Match improved</div>
+                  </div>
+                  <div className="font-heading text-2xl font-light">35 → <span className="text-[#D4AF37]">92</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Editorial ribbon */}
+        <div className="border-y border-white/[0.06] py-6 marquee">
+          <div className="marquee-track font-mono uppercase tracking-[0.3em] text-sm text-zinc-500">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-16">
+                <span>Trusted by ambitious talent</span>
+                <span className="text-[#D4AF37]">◆</span>
+                <span>ATS-grade analysis</span>
+                <span className="text-[#D4AF37]">◆</span>
+                <span>Real-time rewriting</span>
+                <span className="text-[#D4AF37]">◆</span>
+                <span>Role-fit intelligence</span>
+                <span className="text-[#D4AF37]">◆</span>
+                <span>Precision job matching</span>
+                <span className="text-[#D4AF37]">◆</span>
+              </div>
+            ))}
+          </div>
         </div>
-      </footer>
+
+        {/* Features */}
+        <section className="max-w-7xl mx-auto px-6 lg:px-8 py-32">
+          <div className="max-w-2xl mb-16">
+            <div className="overline mb-4">The toolkit</div>
+            <h2 className="font-heading font-light text-4xl sm:text-5xl tracking-tighter leading-tight">
+              Four instruments. <br /> <span className="text-zinc-500">One unfair advantage.</span>
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <FeatureCard icon={<FileText strokeWidth={1.5} />} title="ATS Analyzer" desc="See exactly what recruiter software sees. Score, breakdown, and surgical suggestions." num="01" />
+            <FeatureCard icon={<Sparkles strokeWidth={1.5} />} title="AI Rewriter" desc="Paste any job description. Get a resume tuned for that specific role — as a PDF." num="02" featured />
+            <FeatureCard icon={<Target strokeWidth={1.5} />} title="Role Fit" desc="Which roles you should chase — and precisely which skills to acquire first." num="03" />
+            <FeatureCard icon={<Briefcase strokeWidth={1.5} />} title="Job Matcher" desc="Curated roles ranked against your profile. No noise. Just fit." num="04" />
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="max-w-5xl mx-auto px-6 lg:px-8 pb-32">
+          <div className="glass rounded-3xl p-14 md:p-20 text-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#D4AF37]/[0.05] via-transparent to-transparent" />
+            <div className="relative">
+              <Award className="mx-auto mb-6 text-[#D4AF37]" size={40} strokeWidth={1.2} />
+              <h2 className="font-heading font-light text-4xl sm:text-5xl tracking-tighter mb-5">Stop guessing. Start landing.</h2>
+              <p className="text-lg text-zinc-400 max-w-xl mx-auto mb-10">TalentIQ turns your resume into a machine-optimized asset — free, in seconds.</p>
+              <Link to="/signup" data-testid="cta-signup" className="bg-[#D4AF37] text-black font-medium px-8 py-4 rounded-xl inline-flex items-center gap-2 hover:bg-[#FDE047] transition-all gold-glow">
+                Begin — it's free <ArrowUpRight size={18} strokeWidth={2} />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <footer className="border-t border-white/[0.06] py-8">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 flex flex-wrap justify-between text-sm text-zinc-500">
+            <span>© 2026 TalentIQ</span>
+            <span className="font-mono uppercase tracking-wider text-xs">Engineered for intent.</span>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
 
-function FeatureCard({ bg, icon, title, desc }) {
+function FeatureCard({ icon, title, desc, num, featured }) {
   return (
-    <div className="brut-card p-6 hover:-translate-y-1 hover:brut-shadow-lg transition-all" style={{ background: bg }}>
-      <div className="w-12 h-12 border-2 border-black bg-white flex items-center justify-center mb-4">{icon}</div>
-      <h3 className="font-display font-black text-xl mb-2">{title}</h3>
-      <p className="text-sm">{desc}</p>
+    <div className={`group relative rounded-2xl border p-8 card-hover ${featured ? "bg-gradient-to-br from-[#D4AF37]/[0.06] to-transparent border-[#D4AF37]/20" : "bg-[#0A0A0A] border-white/[0.06]"}`}>
+      <div className="flex items-start justify-between mb-8">
+        <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${featured ? "bg-[#D4AF37]/10 text-[#D4AF37]" : "bg-white/[0.03] text-zinc-400"}`}>
+          {icon}
+        </div>
+        <span className="font-mono text-xs text-zinc-600">{num}</span>
+      </div>
+      <h3 className="font-heading text-xl font-medium mb-2">{title}</h3>
+      <p className="text-sm text-zinc-500 leading-relaxed">{desc}</p>
     </div>
   );
 }

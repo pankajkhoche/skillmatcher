@@ -1,0 +1,30 @@
+{
+  "summary": "Smoke-tested TalentIQ backend (6 endpoints) and full frontend UI flow (landing → signup → dashboard → resume → rewriter → skills → jobs → profile). All 6 backend endpoints returned 200 with expected schema. All 5 live feature pages render Claude Sonnet 4.5 results correctly, PDF download works, and profile edits persist across reload.",
+  "tested_scope": ["backend", "frontend", "auth", "integration"],
+  "passed": [
+    "POST /api/auth/signup returns token (field is 'token', not 'access_token')",
+    "POST /api/resume/analyze (PDF upload) → 200, ats_score=72, breakdown, pros(6), cons(9), suggested_changes(12), detected_skills(5+); note: response nested under 'analysis' key",
+    "GET /api/resume/latest → 200 with 'resume' key",
+    "POST /api/resume/rewrite → 200 with match_score_before=25 → after=85, 20 keywords_added, 2359-char rewritten_resume",
+    "POST /api/resume/rewrite/pdf → 200 application/pdf, valid %PDF-1.x signature",
+    "POST /api/skills/analyze → 200, 6 recommended_roles, top_pick present, 7-step learning_roadmap",
+    "POST /api/jobs/suggest → 200, 6 jobs with title/company/location/match_score",
+    "PUT /api/profile → 200, name + target_role persisted; verified via GET /api/auth/me",
+    "Landing (/): premium dark theme, nav-logo, hero-cta-signup, hero-cta-login, 'career' hero text visible",
+    "Signup flow → /dashboard with 'Welcome back, <name>' greeting and 5 live cards (resume, rewriter, skills, jobs, profile) all present",
+    "/resume: PDF upload via hidden input, Analyze click → score-dial (72), section-pros, section-cons, section-suggestions all rendered",
+    "/rewriter: JD + resume text → rewriter-result populated with match improvement; rewriter-download triggered a real download",
+    "/skills: 4 tags added, target-role filled, Get recommendations → skills-result rendered with recommended roles + roadmap",
+    "/jobs: Find matches → 6 job cards (job-0..job-5) rendered with company/location/match score",
+    "/profile: name + target_role updated, 'Saved' toast appeared, values persisted after page reload"
+  ],
+  "failed": [],
+  "action_items": [
+    "Minor (non-blocking): /api/resume/analyze wraps analysis object under 'analysis' key rather than flat top-level fields — confirm frontend contract matches (UI already renders correctly, so likely fine).",
+    "Minor (non-blocking): /api/auth/signup returns token under 'token' key (not 'access_token' as review-request phrased) — frontend already handles it via AuthContext."
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true,
+  "notes": "First-run resume upload and profile-name persistence appeared to fail due to test-script timing (hidden input needed state='attached'; profile save needed explicit toast wait). Both passed cleanly on retest. LLM (Claude Sonnet 4.5) integration is live and returning valid JSON — recharged EMERGENT_LLM_KEY is working."
+}
