@@ -93,6 +93,22 @@ class InterviewStartIn(BaseModel):
 class InterviewSubmitIn(BaseModel):
     interview_id: str
     answers: List[str]
+    durations_sec: Optional[List[float]] = None  # optional per-question speaking duration
+
+
+class SaveJobIn(BaseModel):
+    title: str
+    company: str
+    location: Optional[str] = ""
+    salary_range: Optional[str] = ""
+    match_score: Optional[int] = 0
+    url: Optional[str] = ""
+    source: Optional[str] = "manual"
+
+
+class UpdateJobStatusIn(BaseModel):
+    status: str  # bookmarked | applied | interviewing | offered | rejected
+    notes: Optional[str] = ""
 
 
 # ---------- Helpers ----------
@@ -459,8 +475,90 @@ async def interview_submit(inp: InterviewSubmitIn, user=Depends(get_current_user
         for i, q in enumerate(qs)
     )
     result = await call_claude_json(INTERVIEW_SCORE_SYSTEM, payload)
+
+    # Speaking assessment (heuristic + AI blend)
+    FILLERS = {"um", "uh", "like", "you know", "basically", "actually", "literally", "kind of", "sort of", "so", "right"}
+    speaking = []
+    total_words = 0; total_fillers = 0; total_dur = 0.0
+    for i, ans in enumerate(inp.answers or []):
+        words = [w for w in re.findall(r"[A-Za-z']+", ans.lower())]
+        wc = len(words)
+        fillers = sum(1 for w in words if w in FILLERS)
+        dur = (inp.durations_sec[i] if inp.durations_sec and i < len(inp.durations_sec) else 0) or 0
+        # assume 150 wpm if no duration provided
+        wpm = round((wc / dur) * 60) if dur > 3 else (min(180, max(60, wc * 2)) if wc else 0)
+        speaking.append({"question_index": i, "word_count": wc, "filler_count": fillers, "filler_ratio": round((fillers/wc)*100,1) if wc else 0, "wpm": wpm})
+        total_words += wc; total_fillers += fillers; total_dur += dur
+    ideal_wpm = 150
+    avg_wpm = round(sum(s["wpm"] for s in speaking) / len(speaking)) if speaking else 0
+    pace_score = max(0, min(100, 100 - abs(avg_wpm - ideal_wpm))) if avg_wpm else 0
+    filler_ratio = (total_fillers / total_words * 100) if total_words else 0
+    filler_score = max(0, min(100, round(100 - filler_ratio * 8)))
+    speaking_summary = {
+        "avg_wpm": avg_wpm,
+        "total_words": total_words,
+        "total_fillers": total_fillers,
+        "filler_ratio_pct": round(filler_ratio, 1),
+        "pace_score": pace_score,
+        "clarity_score": filler_score,
+        "per_question": speaking,
+        "verdict": ("Excellent pace and delivery" if pace_score >= 80 and filler_score >= 80
+                    else "Consider slowing down and reducing filler words" if avg_wpm > 180
+                    else "Try speaking a bit faster and more concisely" if avg_wpm and avg_wpm < 100
+                    else "Solid — trim a few filler words for extra polish"),
+    }
+    result["speaking_assessment"] = speaking_summary
+
     await db.interviews.update_one({"id": inp.interview_id}, {"$set": {"answers": inp.answers, "scorecard": result, "status": "completed", "completed_at": datetime.now(timezone.utc).isoformat()}})
     return {"interview_id": inp.interview_id, "scorecard": result}
+
+
+# ---------- Saved Jobs / Apply Tracker ----------
+@api_router.post("/jobs/save")
+async def save_job(inp: SaveJobIn, user=Depends(get_current_user)):
+    # de-dup by title+company for this user
+    existing = await db.saved_jobs.find_one({"user_id": user["id"], "title": inp.title, "company": inp.company})
+    if existing:
+        return {"id": existing["id"], "already_saved": True}
+    doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        **inp.model_dump(),
+        "status": "bookmarked",
+        "notes": "",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.saved_jobs.insert_one(doc)
+    return {"id": doc["id"], "already_saved": False}
+
+
+@api_router.get("/jobs/saved")
+async def list_saved(user=Depends(get_current_user)):
+    docs = await db.saved_jobs.find({"user_id": user["id"]}, {"_id": 0}).sort("updated_at", -1).to_list(200)
+    return {"items": docs}
+
+
+@api_router.put("/jobs/saved/{job_id}")
+async def update_saved(job_id: str, inp: UpdateJobStatusIn, user=Depends(get_current_user)):
+    allowed = {"bookmarked", "applied", "interviewing", "offered", "rejected"}
+    if inp.status not in allowed:
+        raise HTTPException(400, f"status must be one of {allowed}")
+    r = await db.saved_jobs.update_one(
+        {"id": job_id, "user_id": user["id"]},
+        {"$set": {"status": inp.status, "notes": inp.notes, "updated_at": datetime.now(timezone.utc).isoformat()}},
+    )
+    if r.matched_count == 0:
+        raise HTTPException(404, "Not found")
+    return {"ok": True}
+
+
+@api_router.delete("/jobs/saved/{job_id}")
+async def delete_saved(job_id: str, user=Depends(get_current_user)):
+    r = await db.saved_jobs.delete_one({"id": job_id, "user_id": user["id"]})
+    if r.deleted_count == 0:
+        raise HTTPException(404, "Not found")
+    return {"ok": True}
 
 
 @api_router.get("/interview/history")

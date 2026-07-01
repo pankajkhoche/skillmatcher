@@ -9,14 +9,17 @@ function VoiceRecorder({ onTranscribed, disabled }) {
   const [busy, setBusy] = useState(false);
   const mediaRef = React.useRef(null);
   const chunksRef = React.useRef([]);
+  const startTimeRef = React.useRef(0);
 
   const start = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
       chunksRef.current = [];
+      startTimeRef.current = Date.now();
       mr.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);
       mr.onstop = async () => {
+        const dur = (Date.now() - startTimeRef.current) / 1000;
         stream.getTracks().forEach(t => t.stop());
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         setBusy(true);
@@ -24,7 +27,7 @@ function VoiceRecorder({ onTranscribed, disabled }) {
           const fd = new FormData();
           fd.append("file", blob, "recording.webm");
           const r = await api.post("/interview/transcribe", fd, { headers: { "Content-Type": "multipart/form-data" }, timeout: 90000 });
-          onTranscribed(r.data.text || "");
+          onTranscribed(r.data.text || "", dur);
           toast.success("Transcribed");
         } catch { toast.error("Transcription failed"); }
         finally { setBusy(false); }
@@ -64,6 +67,7 @@ export default function Interview() {
       setInterviewId(r.data.interview_id);
       setQuestions(r.data.questions);
       setAnswers(new Array(r.data.questions.length).fill(""));
+      setDurations(new Array(r.data.questions.length).fill(0));
       setCurrent(0);
       toast.success("Interview started");
     } catch (e) { toast.error(e.response?.data?.detail || "Failed to start"); }
@@ -73,7 +77,7 @@ export default function Interview() {
   const submit = async () => {
     setScoring(true);
     try {
-      const r = await api.post("/interview/submit", { interview_id: interviewId, answers }, { timeout: 120000 });
+      const r = await api.post("/interview/submit", { interview_id: interviewId, answers, durations_sec: durations }, { timeout: 120000 });
       setScorecard(r.data.scorecard);
       toast.success("Scorecard ready");
     } catch (e) { toast.error(e.response?.data?.detail || "Scoring failed"); }
@@ -130,7 +134,7 @@ export default function Interview() {
               <div className="brand-bg h-full transition-all" style={{ width: `${((current+1)/questions.length)*100}%` }}/>
             </div>
             <h2 className="font-heading text-2xl font-light mb-6">{questions[current]?.question}</h2>
-            <div className="mb-3"><VoiceRecorder disabled={scoring} onTranscribed={(t)=>{ const a=[...answers]; a[current]=((a[current]||"")+" "+t).trim(); setAnswers(a); }}/></div>
+            <div className="mb-3"><VoiceRecorder disabled={scoring} onTranscribed={(t, sec)=>{ const a=[...answers]; a[current]=((a[current]||"")+" "+t).trim(); setAnswers(a); if (sec) { const d=[...durations]; d[current]=(d[current]||0)+sec; setDurations(d); } }}/></div>
             <textarea
               data-testid={`iv-answer-${current}`}
               value={answers[current] || ""}
@@ -172,6 +176,18 @@ export default function Interview() {
             </div>
 
             <Panel title="Strengths" items={scorecard.strengths} icon={<Trophy size={16} className="text-emerald-400"/>}/>
+            {scorecard.speaking_assessment && (
+              <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/[0.03] p-6" data-testid="iv-speaking">
+                <div className="flex items-center gap-2 mb-4"><Mic size={16} className="text-cyan-400"/><h3 className="font-heading text-lg font-medium">Speaking Assessment</h3></div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                  <Stat label="Pace" val={`${scorecard.speaking_assessment.avg_wpm} wpm`} score={scorecard.speaking_assessment.pace_score}/>
+                  <Stat label="Clarity" val={`${scorecard.speaking_assessment.filler_ratio_pct}% fillers`} score={scorecard.speaking_assessment.clarity_score}/>
+                  <Stat label="Words" val={scorecard.speaking_assessment.total_words}/>
+                  <Stat label="Fillers" val={scorecard.speaking_assessment.total_fillers}/>
+                </div>
+                <p className="text-sm text-zinc-300 italic">{scorecard.speaking_assessment.verdict}</p>
+              </div>
+            )}
             <Panel title="Improvement Areas" items={scorecard.improvement_areas} icon={<MessageSquare size={16} className="text-orange-400"/>} accent/>
             <Panel title="Next Steps" items={scorecard.next_steps} icon={<ArrowRight size={16} className="text-cyan-400"/>}/>
 
@@ -182,6 +198,16 @@ export default function Interview() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function Stat({ label, val, score }) {
+  const cls = score == null ? "text-white" : score >= 80 ? "brand-text" : score >= 50 ? "text-amber-300" : "text-red-400";
+  return (
+    <div className="rounded-xl border border-white/10 p-3 text-center">
+      <div className={`font-heading font-light text-2xl ${cls}`}>{val}</div>
+      <div className="overline mt-1">{label}</div>
     </div>
   );
 }

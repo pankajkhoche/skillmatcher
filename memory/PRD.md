@@ -39,10 +39,13 @@ Build an AI career platform (TalentIQ) for job seekers & college students. Featu
 ✅ **Resume Compare** (/compare) — upload 2 PDFs → side-by-side scores + winner + strengths/weaknesses + best-of-both recommendation
 ✅ **Real Jobs via Remotive** — GET /api/jobs/real (free public API, no key). Jobs page now has 2 tabs: Real Jobs (Remotive) + AI Curated
 
-## Test Results (iteration_3)
-✅ Backend 100% pass after Whisper `Path()` fix
-✅ Frontend 100% pass (all Phase 3 UI + regressions)
-✅ Whisper transcription tested with a WAV sample — returns clean text
+## Phase 4 - Implemented (2026-02)
+✅ **Save/Bookmark Jobs + Apply Tracker** — Bookmark icon on every job card → saves to DB. New /tracker page shows Kanban-style filter tabs (All / Bookmarked / Applied / Interviewing / Offered / Rejected) with inline status buttons per card. Full CRUD backend: /api/jobs/save, /api/jobs/saved, PUT /api/jobs/saved/{id}, DELETE /api/jobs/saved/{id}.
+✅ **Real-time speaking assessment** — /api/interview/submit now returns `speaking_assessment` with avg_wpm (pace), filler_ratio, pace_score, clarity_score, per-question breakdown, and verdict. Frontend records per-question voice duration via MediaRecorder → sends `durations_sec[]` → shows speaking card on the scorecard with pace/fillers stats.
+✅ Nav + Dashboard include the new Tracker route.
+
+## Test Results
+✅ Save/status/list all verified via curl (200 OK end-to-end)
 
 ## Phase 2 - Deferred
 - P0: AI Mock Interview (voice/text) + Scorecard PDF (Communication, Technical, Confidence, Improvement)

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Nav from "@/components/Nav";
 import api from "@/lib/api";
 import { toast } from "sonner";
-import { Sparkles, MapPin, DollarSign, Briefcase, ArrowRight } from "lucide-react";
+import { Sparkles, MapPin, DollarSign, Briefcase, ArrowRight, Bookmark } from "lucide-react";
 
 export default function Jobs() {
   const [loading, setLoading] = useState(false);
@@ -25,6 +25,13 @@ export default function Jobs() {
   };
 
   const scoreCls = (s) => s >= 80 ? "text-[#22D3EE] border-[#22D3EE]/30 bg-[#22D3EE]/10" : s >= 60 ? "text-amber-500 border-amber-500/30 bg-amber-500/10" : "text-zinc-400 border-white/10 bg-white/[0.03]";
+
+  const saveJob = async (j) => {
+    try {
+      const r = await api.post("/jobs/save", { title: j.title, company: j.company, location: j.location, salary_range: j.salary_range, match_score: j.match_score, url: j.url || "", source: tab });
+      toast.success(r.data.already_saved ? "Already saved" : "Bookmarked → tracker");
+    } catch { toast.error("Save failed"); }
+  };
 
   return (
     <div className="min-h-screen bg-[#06060B] text-white">
@@ -81,6 +88,7 @@ export default function Jobs() {
                   <div className="font-heading text-2xl font-light">{j.match_score}</div>
                   <div className="text-[9px] uppercase tracking-widest text-zinc-500 mt-0.5">Match</div>
                 </div>
+                <button onClick={()=>saveJob(j)} data-testid={`job-save-${i}`} className="w-10 h-10 rounded-xl border border-white/10 hover:border-cyan-400/40 hover:text-cyan-300 text-zinc-400 flex items-center justify-center"><Bookmark size={16} strokeWidth={1.5}/></button>
               </div>
               <p className="text-sm text-zinc-400 mt-4 leading-relaxed">{j.match_reason}</p>
               {j.key_requirements?.length > 0 && (

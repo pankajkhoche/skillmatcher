@@ -35,6 +35,7 @@ export default function Nav() {
               <Link data-testid="nav-history" to="/history" className={linkCls("/history")}>History</Link>
               <Link data-testid="nav-roadmap" to="/roadmap" className={linkCls("/roadmap")}>Roadmap</Link>
               <Link data-testid="nav-compare" to="/compare" className={linkCls("/compare")}>Compare</Link>
+              <Link data-testid="nav-tracker" to="/tracker" className={linkCls("/tracker")}>Tracker</Link>
             </div>
             <div className="flex items-center gap-2">
               <Link data-testid="nav-profile" to="/profile" className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:border-white/20 transition-all"><User size={15} strokeWidth={1.5} /></Link>
