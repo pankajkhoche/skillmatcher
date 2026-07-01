@@ -17,13 +17,19 @@ Build an AI career platform (TalentIQ) for job seekers & college students. Featu
 
 ## Phase 1 - Implemented (2026-02)
 ✅ JWT auth (signup, login, /auth/me, JWT-protected routes)
-✅ Landing page (neo-brutalist hero, marquee, features bento, CTA)
-✅ Dashboard (9-feature bento grid; 5 live, 4 soon)
-✅ Resume Analyzer: PDF/DOCX upload → Claude → ATS score, pros/cons, suggestions, skills, score breakdown
+✅ Landing page — PREMIUM dark theme (ink black + amber gold #D4AF37, Cabinet Grotesk + Manrope + JetBrains Mono)
+✅ Dashboard (9-feature bento grid; 5 live, 4 marked "Soon")
+✅ Resume Analyzer: PDF/DOCX upload → Claude → ATS score dial, pros/cons, suggestions, score breakdown
 ✅ Real-Time Resume Rewriter: paste JD + resume → rewritten resume + match score before/after + keywords + PDF download
-✅ Skills & Role Fit: add skills → Claude → recommended roles + fit scores + skills to learn + learning roadmap
-✅ Job Matcher: uses skills + resume → AI-generated job matches with match scores
+✅ Skills & Role Fit: skills tags → Claude → recommended roles + learning roadmap (vertical timeline)
+✅ Job Matcher: AI-generated job matches with match scores
 ✅ Profile page (edit name, target role, view skills)
+
+## Test Results (iteration_1)
+✅ 100% backend pass, 100% frontend pass
+✅ Claude Sonnet 4.5 integration confirmed working
+✅ PDF upload/analyze/rewrite/download all functional
+✅ Full E2E user journey verified
 
 ## Phase 2 - Deferred
 - P0: AI Mock Interview (voice/text) + Scorecard PDF (Communication, Technical, Confidence, Improvement)
