@@ -6,7 +6,7 @@ import { Sparkles, ArrowRight, Download, Trophy, MessageSquare, Mic, Square, Vid
 import { startBodyAnalyzer } from "@/lib/bodyAnalyzer";
 
 // Unified webcam + mic recorder. Analyzes body-language via MediaPipe while recording.
-function VideoAnswer({ onComplete, disabled }) {
+function VideoAnswer({ onComplete, disabled, questionIndex }) {
   const videoRef = useRef(null);
   const mediaRef = useRef(null);
   const streamRef = useRef(null);
@@ -20,24 +20,40 @@ function VideoAnswer({ onComplete, disabled }) {
   const [live, setLive] = useState({ eye: 0, posture: 0 });
 
   const initCamera = async () => {
-    if (streamRef.current) return true;
+    if (streamRef.current && ready) return true;
     setInitializing(true);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480, facingMode: "user" },
-        audio: true,
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play().catch(() => {});
+    // Step 1: acquire camera+mic
+    if (!streamRef.current) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 640, height: 480, facingMode: "user" },
+          audio: true,
+        });
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play().catch((e) => console.warn("video play failed", e));
+        }
+      } catch (e) {
+        console.warn("getUserMedia failed", e);
+        toast.error("Camera/mic permission denied");
+        setInitializing(false);
+        return false;
       }
+    }
+    // Step 2: initialize body-language analyzer (MediaPipe). If this fails,
+    // stop the camera we just opened so the webcam LED goes off.
+    try {
       const analyzer = await startBodyAnalyzer(videoRef.current);
       analyzerRef.current = analyzer;
       setReady(true);
       return true;
     } catch (e) {
-      toast.error("Camera/mic permission denied");
+      console.warn("body analyzer init failed", e);
+      try { streamRef.current?.getTracks().forEach((t) => t.stop()); } catch (_) { /* noop */ }
+      streamRef.current = null;
+      if (videoRef.current) videoRef.current.srcObject = null;
+      toast.error("Body-language models failed to load — check your network and retry.");
       return false;
     } finally { setInitializing(false); }
   };
@@ -70,6 +86,9 @@ function VideoAnswer({ onComplete, disabled }) {
     analyzerRef.current?.reset();
     chunksRef.current = [];
     startRef.current = Date.now();
+    // Capture the question index at record-start so late transcripts land on the right slot,
+    // even if the user navigates to another question while transcription is in-flight.
+    const capturedIdx = questionIndex;
 
     // Record audio only (webm/opus) for Whisper
     const audioStream = new MediaStream(streamRef.current.getAudioTracks());
@@ -89,9 +108,11 @@ function VideoAnswer({ onComplete, disabled }) {
           duration_sec: dur,
           eye_contact_pct: snap.eye_contact_pct,
           posture_score: snap.posture_score,
+          question_index: capturedIdx,
         });
         toast.success("Answer captured");
       } catch (e) {
+        console.warn("transcription failed", e);
         toast.error("Transcription failed");
       } finally { setBusy(false); }
     };
@@ -188,11 +209,24 @@ export default function Interview() {
     finally { setLoading(false); }
   };
 
-  const handleAnswerComplete = ({ text, duration_sec, eye_contact_pct, posture_score }) => {
-    const a = [...answers]; a[current] = ((a[current] || "") + " " + text).trim(); setAnswers(a);
-    const d = [...durations]; d[current] = (d[current] || 0) + duration_sec; setDurations(d);
+  const handleAnswerComplete = ({ text, duration_sec, eye_contact_pct, posture_score, question_index }) => {
+    const idx = typeof question_index === "number" ? question_index : current;
+    setAnswers((prev) => {
+      const a = [...prev];
+      a[idx] = ((a[idx] || "") + " " + text).trim();
+      return a;
+    });
+    setDurations((prev) => {
+      const d = [...prev];
+      d[idx] = (d[idx] || 0) + duration_sec;
+      return d;
+    });
     // For each question, keep the latest capture's body-language snapshot.
-    const b = [...bodyLang]; b[current] = { eye_contact_pct, posture_score }; setBodyLang(b);
+    setBodyLang((prev) => {
+      const b = [...prev];
+      b[idx] = { eye_contact_pct, posture_score };
+      return b;
+    });
   };
 
   const submit = async () => {
@@ -253,7 +287,7 @@ export default function Interview() {
 
         {questions.length > 0 && !scorecard && (
           <div className="space-y-4 fade-up">
-            <VideoAnswer key={current} disabled={scoring} onComplete={handleAnswerComplete}/>
+            <VideoAnswer disabled={scoring} onComplete={handleAnswerComplete} questionIndex={current}/>
             <div className="glass rounded-2xl p-6">
               <div className="flex justify-between items-center mb-4">
                 <div className="overline">Question {current+1} of {questions.length}</div>
@@ -269,7 +303,7 @@ export default function Interview() {
               <textarea
                 data-testid={`iv-answer-${current}`}
                 value={answers[current] || ""}
-                onChange={(e)=>{ const a=[...answers]; a[current]=e.target.value; setAnswers(a); }}
+                onChange={(e)=>{ const v=e.target.value; setAnswers(prev => { const a=[...prev]; a[current]=v; return a; }); }}
                 placeholder="Your transcript will appear here. You can edit it before moving on."
                 className="w-full bg-black/30 border border-white/10 rounded-xl p-4 min-h-[120px] text-sm focus:border-cyan-400/50 transition-colors placeholder:text-zinc-700 leading-relaxed"
               />
