@@ -44,8 +44,15 @@ Build an AI career platform (TalentIQ) for job seekers & college students. Featu
 ✅ **Real-time speaking assessment** — /api/interview/submit now returns `speaking_assessment` with avg_wpm (pace), filler_ratio, pace_score, clarity_score, per-question breakdown, and verdict. Frontend records per-question voice duration via MediaRecorder → sends `durations_sec[]` → shows speaking card on the scorecard with pace/fillers stats.
 ✅ Nav + Dashboard include the new Tracker route.
 
+## Phase 5 - Implemented (2026-02)
+✅ **Video Mock Interview (replaces voice-only)** — MediaPipe FaceLandmarker + PoseLandmarker run client-side (WASM/GPU), tracking eye-contact % (face blendshapes) and posture (shoulder tilt + lean + upright score) at ~5 fps. Live meters overlay the webcam preview during recording. Whisper still transcribes audio.
+✅ **Body-language on Scorecard** — /api/interview/submit accepts `body_language[]` per question and returns `body_language` block on scorecard: avg_eye_contact_pct, avg_posture_score, presence_score, verdict.
+✅ **LinkedIn Import (URL + Paste text)** — `POST /api/profile/linkedin-parse` takes LinkedIn URL + pasted profile text → Claude extracts { name, headline, target_role, skills, experience_summary }. `POST /api/profile/linkedin-apply` merges chosen fields (skills deduped case-insensitive). Profile page shows extract-review-approve UI with per-skill toggles + per-field checkboxes.
+✅ User model now stores `linkedin_url`; returned by /auth/me, /auth/login, /auth/signup, /profile.
+
 ## Test Results
-✅ Save/status/list all verified via curl (200 OK end-to-end)
+✅ LinkedIn parse + apply verified via curl (skills extracted + merged).
+✅ Interview submit with `body_language` payload verified via curl (body_language block returned in scorecard).
 
 ## Phase 2 - Deferred
 - P0: AI Mock Interview (voice/text) + Scorecard PDF (Communication, Technical, Confidence, Improvement)

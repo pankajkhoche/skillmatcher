@@ -75,6 +75,20 @@ class ProfileUpdate(BaseModel):
     name: Optional[str] = None
     target_role: Optional[str] = None
     skills: Optional[List[str]] = None
+    linkedin_url: Optional[str] = None
+
+
+class LinkedInParseIn(BaseModel):
+    linkedin_url: Optional[str] = ""
+    raw_text: Optional[str] = ""
+
+
+class LinkedInApplyIn(BaseModel):
+    linkedin_url: Optional[str] = ""
+    name: Optional[str] = None
+    target_role: Optional[str] = None
+    headline: Optional[str] = None
+    skills: Optional[List[str]] = []
 
 class SkillsIn(BaseModel):
     skills: List[str]
@@ -94,6 +108,7 @@ class InterviewSubmitIn(BaseModel):
     interview_id: str
     answers: List[str]
     durations_sec: Optional[List[float]] = None  # optional per-question speaking duration
+    body_language: Optional[List[Optional[dict]]] = None  # per-question { eye_contact_pct, posture_score }
 
 
 class SaveJobIn(BaseModel):
@@ -200,7 +215,7 @@ async def signup(inp: SignupIn):
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.users.insert_one(doc)
-    return {"token": make_token(uid), "user": {k: doc[k] for k in ["id", "name", "email", "role", "target_role", "skills"]}}
+    return {"token": make_token(uid), "user": {k: doc.get(k) for k in ["id", "name", "email", "role", "target_role", "skills", "linkedin_url"]}}
 
 
 @api_router.post("/auth/login")
@@ -208,12 +223,12 @@ async def login(inp: LoginIn):
     user = await db.users.find_one({"email": inp.email.lower()})
     if not user or not verify_pw(inp.password, user["password"]):
         raise HTTPException(401, "Invalid credentials")
-    return {"token": make_token(user["id"]), "user": {k: user.get(k) for k in ["id", "name", "email", "role", "target_role", "skills"]}}
+    return {"token": make_token(user["id"]), "user": {k: user.get(k) for k in ["id", "name", "email", "role", "target_role", "skills", "linkedin_url"]}}
 
 
 @api_router.get("/auth/me")
 async def me(user=Depends(get_current_user)):
-    return {"user": {k: user.get(k) for k in ["id", "name", "email", "role", "target_role", "skills"]}}
+    return {"user": {k: user.get(k) for k in ["id", "name", "email", "role", "target_role", "skills", "linkedin_url"]}}
 
 
 @api_router.put("/profile")
@@ -222,7 +237,84 @@ async def update_profile(inp: ProfileUpdate, user=Depends(get_current_user)):
     if updates:
         await db.users.update_one({"id": user["id"]}, {"$set": updates})
     fresh = await db.users.find_one({"id": user["id"]}, {"_id": 0, "password": 0})
-    return {"user": {k: fresh.get(k) for k in ["id", "name", "email", "role", "target_role", "skills"]}}
+    return {"user": {k: fresh.get(k) for k in ["id", "name", "email", "role", "target_role", "skills", "linkedin_url"]}}
+
+
+# ---------- LinkedIn Import ----------
+LINKEDIN_PARSE_SYSTEM = """You are a LinkedIn profile parser. Given a LinkedIn URL and/or the raw text
+a user pasted from their LinkedIn profile (About, Experience, Skills sections), extract structured data.
+Return STRICT JSON only, no prose:
+{
+  "name": string | null,
+  "headline": string | null,
+  "target_role": string | null,   // best-guess most-recent role or a role that fits their trajectory
+  "skills": [string, ...],         // deduped, canonical skill names (e.g. "Python", "React", "AWS")
+  "experience_summary": string     // 2-3 sentence summary of their experience
+}
+Rules:
+- If the text is empty or too short to infer, return nulls / empty arrays.
+- Skills MUST be short canonical tokens (max 3 words each), between 5 and 25 items.
+- Do NOT invent facts not in the input.
+Return ONLY JSON."""
+
+
+@api_router.post("/profile/linkedin-parse")
+async def linkedin_parse(inp: LinkedInParseIn, user=Depends(get_current_user)):
+    text = (inp.raw_text or "").strip()
+    url = (inp.linkedin_url or "").strip()
+    if not text and not url:
+        raise HTTPException(400, "Provide a LinkedIn URL or paste your profile text")
+    if len(text) < 40:
+        raise HTTPException(400, "Paste more of your LinkedIn profile text (About/Experience/Skills)")
+    prompt = f"LINKEDIN URL: {url or 'not provided'}\n\nPASTED PROFILE TEXT:\n{text[:8000]}"
+    result = await call_claude_json(LINKEDIN_PARSE_SYSTEM, prompt)
+    # Normalise skills
+    skills = result.get("skills") or []
+    clean_skills = []
+    seen = set()
+    for s in skills:
+        s = (s or "").strip()
+        if s and s.lower() not in seen and len(s) <= 40:
+            clean_skills.append(s)
+            seen.add(s.lower())
+    result["skills"] = clean_skills[:25]
+    return result
+
+
+@api_router.post("/profile/linkedin-apply")
+async def linkedin_apply(inp: LinkedInApplyIn, user=Depends(get_current_user)):
+    updates = {}
+    if inp.linkedin_url:
+        updates["linkedin_url"] = inp.linkedin_url.strip()
+    if inp.name:
+        updates["name"] = inp.name.strip()
+    if inp.target_role:
+        updates["target_role"] = inp.target_role.strip()
+    if inp.headline and not user.get("target_role"):
+        # Fallback: only set headline as target_role if user has no target_role and none provided
+        updates.setdefault("target_role", inp.headline.strip())
+
+    # Merge skills (dedup case-insensitive, preserve existing casing)
+    added_skills = 0
+    if inp.skills:
+        existing = user.get("skills") or []
+        existing_lower = {s.lower() for s in existing}
+        merged = list(existing)
+        for s in inp.skills:
+            s = (s or "").strip()
+            if s and s.lower() not in existing_lower:
+                merged.append(s)
+                existing_lower.add(s.lower())
+                added_skills += 1
+        updates["skills"] = merged
+
+    if updates:
+        await db.users.update_one({"id": user["id"]}, {"$set": updates})
+    fresh = await db.users.find_one({"id": user["id"]}, {"_id": 0, "password": 0})
+    return {
+        "user": {k: fresh.get(k) for k in ["id", "name", "email", "role", "target_role", "skills", "linkedin_url"]},
+        "added_skills": added_skills,
+    }
 
 
 # ---------- Resume: ATS Analysis ----------
@@ -508,6 +600,39 @@ async def interview_submit(inp: InterviewSubmitIn, user=Depends(get_current_user
                     else "Solid — trim a few filler words for extra polish"),
     }
     result["speaking_assessment"] = speaking_summary
+
+    # Body-language aggregation (from client-side MediaPipe)
+    bl_in = inp.body_language or []
+    eye_vals, posture_vals = [], []
+    for entry in bl_in:
+        if not entry:
+            continue
+        e = entry.get("eye_contact_pct")
+        p = entry.get("posture_score")
+        if isinstance(e, (int, float)) and e > 0:
+            eye_vals.append(float(e))
+        if isinstance(p, (int, float)) and p > 0:
+            posture_vals.append(float(p))
+    if eye_vals or posture_vals:
+        avg_eye = round(sum(eye_vals) / len(eye_vals)) if eye_vals else 0
+        avg_posture = round(sum(posture_vals) / len(posture_vals)) if posture_vals else 0
+        presence = round(avg_eye * 0.6 + avg_posture * 0.4)
+        if avg_eye >= 75 and avg_posture >= 75:
+            verdict = "Strong presence — steady eye contact and upright posture."
+        elif avg_eye < 40:
+            verdict = "Look at the camera more often; your gaze drifts off frequently."
+        elif avg_posture < 40:
+            verdict = "Sit upright and centered in frame to project more confidence."
+        else:
+            verdict = "Decent presence — a little more eye contact will make you unmistakable."
+        result["body_language"] = {
+            "avg_eye_contact_pct": avg_eye,
+            "avg_posture_score": avg_posture,
+            "presence_score": presence,
+            "captured_answers": max(len(eye_vals), len(posture_vals)),
+            "per_question": bl_in,
+            "verdict": verdict,
+        }
 
     await db.interviews.update_one({"id": inp.interview_id}, {"$set": {"answers": inp.answers, "scorecard": result, "status": "completed", "completed_at": datetime.now(timezone.utc).isoformat()}})
     return {"interview_id": inp.interview_id, "scorecard": result}
