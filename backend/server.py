@@ -692,6 +692,90 @@ async def interview_history(user=Depends(get_current_user)):
     return {"items": docs}
 
 
+@api_router.get("/interview/body-language/trends")
+async def body_language_trends(user=Depends(get_current_user)):
+    """Aggregate body-language history across all completed interviews for the current user."""
+    docs = await db.interviews.find(
+        {"user_id": user["id"], "status": "completed"},
+        {"_id": 0},
+    ).sort("created_at", 1).to_list(200)
+
+    timeline = []
+    for d in docs:
+        bl = (d.get("scorecard") or {}).get("body_language")
+        if not bl:
+            continue
+        timeline.append({
+            "id": d.get("id"),
+            "role": d.get("role"),
+            "created_at": d.get("created_at"),
+            "avg_eye_contact_pct": bl.get("avg_eye_contact_pct", 0),
+            "avg_posture_score": bl.get("avg_posture_score", 0),
+            "presence_score": bl.get("presence_score", 0),
+            "per_question": bl.get("per_question", []),
+        })
+
+    if not timeline:
+        return {"timeline": [], "summary": None}
+
+    eyes = [t["avg_eye_contact_pct"] for t in timeline]
+    postures = [t["avg_posture_score"] for t in timeline]
+    overall_eye = round(sum(eyes) / len(eyes)) if eyes else 0
+    overall_posture = round(sum(postures) / len(postures)) if postures else 0
+
+    trend_direction = "steady"
+    trend_delta = 0
+    if len(timeline) >= 2:
+        half = max(1, len(timeline) // 2)
+        first_half = timeline[:half]
+        last_half = timeline[-half:]
+        avg_first = sum(t["presence_score"] for t in first_half) / len(first_half)
+        avg_last = sum(t["presence_score"] for t in last_half) / len(last_half)
+        trend_delta = round(avg_last - avg_first)
+        if trend_delta > 3:
+            trend_direction = "improving"
+        elif trend_delta < -3:
+            trend_direction = "declining"
+
+    best = max(timeline, key=lambda t: t["presence_score"])
+    worst = min(timeline, key=lambda t: t["presence_score"])
+
+    # per-question aggregation across all interviews (question index -> avg values)
+    q_bucket = {}
+    for t in timeline:
+        for i, pq in enumerate(t.get("per_question") or []):
+            if not pq:
+                continue
+            b = q_bucket.setdefault(i, {"eye": [], "posture": []})
+            if pq.get("eye_contact_pct"):
+                b["eye"].append(pq["eye_contact_pct"])
+            if pq.get("posture_score"):
+                b["posture"].append(pq["posture_score"])
+    per_question_avg = [
+        {
+            "question_index": i,
+            "avg_eye_contact_pct": round(sum(v["eye"]) / len(v["eye"])) if v["eye"] else 0,
+            "avg_posture_score": round(sum(v["posture"]) / len(v["posture"])) if v["posture"] else 0,
+            "samples": max(len(v["eye"]), len(v["posture"])),
+        }
+        for i, v in sorted(q_bucket.items())
+    ]
+
+    return {
+        "timeline": timeline,
+        "summary": {
+            "total_interviews": len(timeline),
+            "overall_avg_eye_contact_pct": overall_eye,
+            "overall_avg_posture_score": overall_posture,
+            "trend_direction": trend_direction,
+            "trend_delta": trend_delta,
+            "best_interview": {"id": best["id"], "role": best["role"], "presence_score": best["presence_score"], "created_at": best["created_at"]},
+            "worst_interview": {"id": worst["id"], "role": worst["role"], "presence_score": worst["presence_score"], "created_at": worst["created_at"]},
+            "per_question_avg": per_question_avg,
+        },
+    }
+
+
 @api_router.post("/interview/scorecard/pdf")
 async def interview_pdf(payload: dict, user=Depends(get_current_user)):
     iv_id = payload.get("interview_id")

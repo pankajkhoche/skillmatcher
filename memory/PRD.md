@@ -50,9 +50,8 @@ Build an AI career platform (TalentIQ) for job seekers & college students. Featu
 ✅ **LinkedIn Import (URL + Paste text)** — `POST /api/profile/linkedin-parse` takes LinkedIn URL + pasted profile text → Claude extracts { name, headline, target_role, skills, experience_summary }. `POST /api/profile/linkedin-apply` merges chosen fields (skills deduped case-insensitive). Profile page shows extract-review-approve UI with per-skill toggles + per-field checkboxes.
 ✅ User model now stores `linkedin_url`; returned by /auth/me, /auth/login, /auth/signup, /profile.
 
-## Test Results
-✅ LinkedIn parse + apply verified via curl (skills extracted + merged).
-✅ Interview submit with `body_language` payload verified via curl (body_language block returned in scorecard).
+## Phase 6 - Implemented (2026-02)
+✅ **Body-Language Trends across interviews** — new `GET /api/interview/body-language/trends` aggregates every completed video interview: timeline (per-interview avg eye/posture/presence), overall averages, trend direction (improving/steady/declining with delta), best interview, per-question index averages. New **Body Language** tab on `/history` renders: 4 summary tiles + recharts LineChart (Eye/Posture/Presence over time) + best-interview card + per-question mini bar chart + full interviews list. Existing Interview tab entries now also display the body-language snapshot per interview.
 
 ## Phase 2 - Deferred
 - P0: AI Mock Interview (voice/text) + Scorecard PDF (Communication, Technical, Confidence, Improvement)
