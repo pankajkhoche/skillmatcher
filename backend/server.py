@@ -523,8 +523,14 @@ async def transcribe_audio(file: UploadFile = File(...), user=Depends(get_curren
         f.write(data)
     try:
         stt = OpenAISpeechToText(api_key=EMERGENT_LLM_KEY)
-        result = await stt.transcribe(file=tmp_path, model="whisper-1", response_format="json")
-        text = result.get("text", "") if isinstance(result, dict) else str(result)
+        result = await stt.transcribe(file=Path(tmp_path), model="whisper-1", response_format="json")
+        # result may be a Pydantic object or dict
+        if hasattr(result, "text"):
+            text = result.text
+        elif isinstance(result, dict):
+            text = result.get("text", "")
+        else:
+            text = str(result)
         return {"text": text}
     finally:
         try: os.remove(tmp_path)

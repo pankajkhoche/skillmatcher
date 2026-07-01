@@ -33,9 +33,16 @@ Build an AI career platform (TalentIQ) for job seekers & college students. Featu
 ✅ **3D floating hero shape** — rotating hexagonal glass prism behind ATS card
 ✅ **New palette** — Electric cyan (#22D3EE) + coral (#FB7185) on deep navy (#06060B)
 
-## Test Results
-✅ iteration_1: 100% Phase 1 pass (auth + resume + rewriter + skills + jobs + profile)
-✅ iteration_2: 100% Phase 2 pass (interview flow + scorecard PDF + history + regressions)
+## Phase 3 - Implemented (2026-02)
+✅ **Voice-based Mock Interview** — MediaRecorder → Whisper (via Emergent key) transcription; Mic button on each question that appends transcribed text to the answer textarea
+✅ **Career Roadmap deep-dive** (/roadmap) — 4-phase 12-month plan with milestones, skills, resources, success metrics, long-term vision, monthly habits, certifications, salary impact
+✅ **Resume Compare** (/compare) — upload 2 PDFs → side-by-side scores + winner + strengths/weaknesses + best-of-both recommendation
+✅ **Real Jobs via Remotive** — GET /api/jobs/real (free public API, no key). Jobs page now has 2 tabs: Real Jobs (Remotive) + AI Curated
+
+## Test Results (iteration_3)
+✅ Backend 100% pass after Whisper `Path()` fix
+✅ Frontend 100% pass (all Phase 3 UI + regressions)
+✅ Whisper transcription tested with a WAV sample — returns clean text
 
 ## Phase 2 - Deferred
 - P0: AI Mock Interview (voice/text) + Scorecard PDF (Communication, Technical, Confidence, Improvement)
