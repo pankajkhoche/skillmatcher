@@ -60,8 +60,8 @@ function VideoAnswer({ onComplete, disabled }) {
 
   // cleanup on unmount
   useEffect(() => () => {
-    try { analyzerRef.current?.stop(); } catch (e) { /* noop */ }
-    try { streamRef.current?.getTracks().forEach((t) => t.stop()); } catch (e) { /* noop */ }
+    try { analyzerRef.current?.stop(); } catch (e) { console.warn("body analyzer stop failed", e); }
+    try { streamRef.current?.getTracks().forEach((t) => t.stop()); } catch (e) { console.warn("stream stop failed", e); }
   }, []);
 
   const start = async () => {

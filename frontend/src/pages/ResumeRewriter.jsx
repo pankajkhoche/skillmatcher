@@ -19,7 +19,7 @@ export default function ResumeRewriter() {
     } else {
       api.get("/resume/latest").then((r) => {
         if (r.data?.resume?.resume_text) setResumeText(r.data.resume.resume_text);
-      }).catch(() => {});
+      }).catch((e) => console.warn("latest resume load failed", e?.response?.status));
     }
   }, [loc.state]);
 
@@ -121,7 +121,7 @@ export default function ResumeRewriter() {
                     <div>
                       <div className="overline mb-2">Keywords added</div>
                       <div className="flex flex-wrap gap-1.5">
-                        {result.keywords_added.map((k,i)=>(<span key={i} className="text-xs px-2.5 py-1 rounded-md bg-[#22D3EE]/10 text-[#22D3EE] border border-cyan-400/20 font-mono">{k}</span>))}
+                        {result.keywords_added.map((k)=>(<span key={k} className="text-xs px-2.5 py-1 rounded-md bg-[#22D3EE]/10 text-[#22D3EE] border border-cyan-400/20 font-mono">{k}</span>))}
                       </div>
                     </div>
                   )}
@@ -142,7 +142,7 @@ export default function ResumeRewriter() {
                     <div className="overline mb-3">What changed</div>
                     <ul className="space-y-2 text-sm text-zinc-400">
                       {result.improvements.map((it,i)=>(
-                        <li key={i} className="flex gap-3">
+                        <li key={`${i}-${it.slice(0, 20)}`} className="flex gap-3">
                           <span className="text-[#22D3EE] font-mono text-xs mt-0.5">{String(i+1).padStart(2,"0")}</span>
                           <span className="leading-relaxed">{it}</span>
                         </li>

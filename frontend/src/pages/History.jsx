@@ -12,10 +12,11 @@ export default function History() {
   const [tab, setTab] = useState("resumes");
 
   useEffect(() => {
-    api.get("/history/resumes").then(r => setResumes(r.data.items || [])).catch(()=>{});
-    api.get("/history/rewrites").then(r => setRewrites(r.data.items || [])).catch(()=>{});
-    api.get("/interview/history").then(r => setInterviews(r.data.items || [])).catch(()=>{});
-    api.get("/interview/body-language/trends").then(r => setTrends(r.data)).catch(()=>{});
+    const warn = (label) => (e) => console.warn(`history ${label} failed`, e?.response?.status);
+    api.get("/history/resumes").then(r => setResumes(r.data.items || [])).catch(warn("resumes"));
+    api.get("/history/rewrites").then(r => setRewrites(r.data.items || [])).catch(warn("rewrites"));
+    api.get("/interview/history").then(r => setInterviews(r.data.items || [])).catch(warn("interviews"));
+    api.get("/interview/body-language/trends").then(r => setTrends(r.data)).catch(warn("bl-trends"));
   }, []);
 
   const tabs = [

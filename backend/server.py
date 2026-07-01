@@ -556,6 +556,93 @@ async def interview_start(inp: InterviewStartIn, user=Depends(get_current_user))
     return {"interview_id": iv_id, "questions": doc["questions"]}
 
 
+FILLERS = {"um", "uh", "like", "you know", "basically", "actually", "literally", "kind of", "sort of", "so", "right"}
+IDEAL_WPM = 150
+
+
+def _per_answer_speaking_metrics(answers: List[str], durations_sec: Optional[List[float]]):
+    """Compute per-question word/filler/pace stats."""
+    per_q = []
+    total_words = total_fillers = 0
+    for i, ans in enumerate(answers or []):
+        words = re.findall(r"[A-Za-z']+", ans.lower())
+        wc = len(words)
+        fillers = sum(1 for w in words if w in FILLERS)
+        dur = (durations_sec[i] if durations_sec and i < len(durations_sec) else 0) or 0
+        wpm = round((wc / dur) * 60) if dur > 3 else (min(180, max(60, wc * 2)) if wc else 0)
+        per_q.append({
+            "question_index": i, "word_count": wc, "filler_count": fillers,
+            "filler_ratio": round((fillers / wc) * 100, 1) if wc else 0, "wpm": wpm,
+        })
+        total_words += wc
+        total_fillers += fillers
+    return per_q, total_words, total_fillers
+
+
+def _speaking_verdict(pace_score: int, filler_score: int, avg_wpm: int) -> str:
+    if pace_score >= 80 and filler_score >= 80:
+        return "Excellent pace and delivery"
+    if avg_wpm > 180:
+        return "Consider slowing down and reducing filler words"
+    if avg_wpm and avg_wpm < 100:
+        return "Try speaking a bit faster and more concisely"
+    return "Solid — trim a few filler words for extra polish"
+
+
+def build_speaking_assessment(answers: List[str], durations_sec: Optional[List[float]]) -> dict:
+    per_q, total_words, total_fillers = _per_answer_speaking_metrics(answers, durations_sec)
+    avg_wpm = round(sum(s["wpm"] for s in per_q) / len(per_q)) if per_q else 0
+    pace_score = max(0, min(100, 100 - abs(avg_wpm - IDEAL_WPM))) if avg_wpm else 0
+    filler_ratio = (total_fillers / total_words * 100) if total_words else 0
+    filler_score = max(0, min(100, round(100 - filler_ratio * 8)))
+    return {
+        "avg_wpm": avg_wpm,
+        "total_words": total_words,
+        "total_fillers": total_fillers,
+        "filler_ratio_pct": round(filler_ratio, 1),
+        "pace_score": pace_score,
+        "clarity_score": filler_score,
+        "per_question": per_q,
+        "verdict": _speaking_verdict(pace_score, filler_score, avg_wpm),
+    }
+
+
+def _body_language_verdict(avg_eye: int, avg_posture: int) -> str:
+    if avg_eye >= 75 and avg_posture >= 75:
+        return "Strong presence — steady eye contact and upright posture."
+    if avg_eye < 40:
+        return "Look at the camera more often; your gaze drifts off frequently."
+    if avg_posture < 40:
+        return "Sit upright and centered in frame to project more confidence."
+    return "Decent presence — a little more eye contact will make you unmistakable."
+
+
+def build_body_language_summary(body_language: Optional[List[Optional[dict]]]) -> Optional[dict]:
+    entries = body_language or []
+    eye_vals, posture_vals = [], []
+    for entry in entries:
+        if not entry:
+            continue
+        e = entry.get("eye_contact_pct")
+        p = entry.get("posture_score")
+        if isinstance(e, (int, float)) and e > 0:
+            eye_vals.append(float(e))
+        if isinstance(p, (int, float)) and p > 0:
+            posture_vals.append(float(p))
+    if not (eye_vals or posture_vals):
+        return None
+    avg_eye = round(sum(eye_vals) / len(eye_vals)) if eye_vals else 0
+    avg_posture = round(sum(posture_vals) / len(posture_vals)) if posture_vals else 0
+    return {
+        "avg_eye_contact_pct": avg_eye,
+        "avg_posture_score": avg_posture,
+        "presence_score": round(avg_eye * 0.6 + avg_posture * 0.4),
+        "captured_answers": max(len(eye_vals), len(posture_vals)),
+        "per_question": entries,
+        "verdict": _body_language_verdict(avg_eye, avg_posture),
+    }
+
+
 @api_router.post("/interview/submit")
 async def interview_submit(inp: InterviewSubmitIn, user=Depends(get_current_user)):
     iv = await db.interviews.find_one({"id": inp.interview_id, "user_id": user["id"]})
@@ -567,72 +654,10 @@ async def interview_submit(inp: InterviewSubmitIn, user=Depends(get_current_user
         for i, q in enumerate(qs)
     )
     result = await call_claude_json(INTERVIEW_SCORE_SYSTEM, payload)
-
-    # Speaking assessment (heuristic + AI blend)
-    FILLERS = {"um", "uh", "like", "you know", "basically", "actually", "literally", "kind of", "sort of", "so", "right"}
-    speaking = []
-    total_words = 0; total_fillers = 0; total_dur = 0.0
-    for i, ans in enumerate(inp.answers or []):
-        words = [w for w in re.findall(r"[A-Za-z']+", ans.lower())]
-        wc = len(words)
-        fillers = sum(1 for w in words if w in FILLERS)
-        dur = (inp.durations_sec[i] if inp.durations_sec and i < len(inp.durations_sec) else 0) or 0
-        # assume 150 wpm if no duration provided
-        wpm = round((wc / dur) * 60) if dur > 3 else (min(180, max(60, wc * 2)) if wc else 0)
-        speaking.append({"question_index": i, "word_count": wc, "filler_count": fillers, "filler_ratio": round((fillers/wc)*100,1) if wc else 0, "wpm": wpm})
-        total_words += wc; total_fillers += fillers; total_dur += dur
-    ideal_wpm = 150
-    avg_wpm = round(sum(s["wpm"] for s in speaking) / len(speaking)) if speaking else 0
-    pace_score = max(0, min(100, 100 - abs(avg_wpm - ideal_wpm))) if avg_wpm else 0
-    filler_ratio = (total_fillers / total_words * 100) if total_words else 0
-    filler_score = max(0, min(100, round(100 - filler_ratio * 8)))
-    speaking_summary = {
-        "avg_wpm": avg_wpm,
-        "total_words": total_words,
-        "total_fillers": total_fillers,
-        "filler_ratio_pct": round(filler_ratio, 1),
-        "pace_score": pace_score,
-        "clarity_score": filler_score,
-        "per_question": speaking,
-        "verdict": ("Excellent pace and delivery" if pace_score >= 80 and filler_score >= 80
-                    else "Consider slowing down and reducing filler words" if avg_wpm > 180
-                    else "Try speaking a bit faster and more concisely" if avg_wpm and avg_wpm < 100
-                    else "Solid — trim a few filler words for extra polish"),
-    }
-    result["speaking_assessment"] = speaking_summary
-
-    # Body-language aggregation (from client-side MediaPipe)
-    bl_in = inp.body_language or []
-    eye_vals, posture_vals = [], []
-    for entry in bl_in:
-        if not entry:
-            continue
-        e = entry.get("eye_contact_pct")
-        p = entry.get("posture_score")
-        if isinstance(e, (int, float)) and e > 0:
-            eye_vals.append(float(e))
-        if isinstance(p, (int, float)) and p > 0:
-            posture_vals.append(float(p))
-    if eye_vals or posture_vals:
-        avg_eye = round(sum(eye_vals) / len(eye_vals)) if eye_vals else 0
-        avg_posture = round(sum(posture_vals) / len(posture_vals)) if posture_vals else 0
-        presence = round(avg_eye * 0.6 + avg_posture * 0.4)
-        if avg_eye >= 75 and avg_posture >= 75:
-            verdict = "Strong presence — steady eye contact and upright posture."
-        elif avg_eye < 40:
-            verdict = "Look at the camera more often; your gaze drifts off frequently."
-        elif avg_posture < 40:
-            verdict = "Sit upright and centered in frame to project more confidence."
-        else:
-            verdict = "Decent presence — a little more eye contact will make you unmistakable."
-        result["body_language"] = {
-            "avg_eye_contact_pct": avg_eye,
-            "avg_posture_score": avg_posture,
-            "presence_score": presence,
-            "captured_answers": max(len(eye_vals), len(posture_vals)),
-            "per_question": bl_in,
-            "verdict": verdict,
-        }
+    result["speaking_assessment"] = build_speaking_assessment(inp.answers, inp.durations_sec)
+    bl = build_body_language_summary(inp.body_language)
+    if bl:
+        result["body_language"] = bl
 
     await db.interviews.update_one({"id": inp.interview_id}, {"$set": {"answers": inp.answers, "scorecard": result, "status": "completed", "completed_at": datetime.now(timezone.utc).isoformat()}})
     return {"interview_id": inp.interview_id, "scorecard": result}
@@ -692,14 +717,8 @@ async def interview_history(user=Depends(get_current_user)):
     return {"items": docs}
 
 
-@api_router.get("/interview/body-language/trends")
-async def body_language_trends(user=Depends(get_current_user)):
-    """Aggregate body-language history across all completed interviews for the current user."""
-    docs = await db.interviews.find(
-        {"user_id": user["id"], "status": "completed"},
-        {"_id": 0},
-    ).sort("created_at", 1).to_list(200)
-
+def _build_bl_timeline(docs: List[dict]) -> List[dict]:
+    """Convert raw interview docs to timeline entries containing body-language data."""
     timeline = []
     for d in docs:
         bl = (d.get("scorecard") or {}).get("body_language")
@@ -714,64 +733,76 @@ async def body_language_trends(user=Depends(get_current_user)):
             "presence_score": bl.get("presence_score", 0),
             "per_question": bl.get("per_question", []),
         })
+    return timeline
 
-    if not timeline:
-        return {"timeline": [], "summary": None}
 
-    eyes = [t["avg_eye_contact_pct"] for t in timeline]
-    postures = [t["avg_posture_score"] for t in timeline]
-    overall_eye = round(sum(eyes) / len(eyes)) if eyes else 0
-    overall_posture = round(sum(postures) / len(postures)) if postures else 0
+def _compute_trend(timeline: List[dict]):
+    """Return (direction, delta) comparing first vs last half of presence scores."""
+    if len(timeline) < 2:
+        return "steady", 0
+    half = max(1, len(timeline) // 2)
+    avg_first = sum(t["presence_score"] for t in timeline[:half]) / half
+    avg_last = sum(t["presence_score"] for t in timeline[-half:]) / half
+    delta = round(avg_last - avg_first)
+    if delta > 3:
+        return "improving", delta
+    if delta < -3:
+        return "declining", delta
+    return "steady", delta
 
-    trend_direction = "steady"
-    trend_delta = 0
-    if len(timeline) >= 2:
-        half = max(1, len(timeline) // 2)
-        first_half = timeline[:half]
-        last_half = timeline[-half:]
-        avg_first = sum(t["presence_score"] for t in first_half) / len(first_half)
-        avg_last = sum(t["presence_score"] for t in last_half) / len(last_half)
-        trend_delta = round(avg_last - avg_first)
-        if trend_delta > 3:
-            trend_direction = "improving"
-        elif trend_delta < -3:
-            trend_direction = "declining"
 
-    best = max(timeline, key=lambda t: t["presence_score"])
-    worst = min(timeline, key=lambda t: t["presence_score"])
-
-    # per-question aggregation across all interviews (question index -> avg values)
-    q_bucket = {}
+def _aggregate_per_question(timeline: List[dict]) -> List[dict]:
+    """Average eye-contact and posture per question index across all interviews."""
+    buckets: dict[int, dict] = {}
     for t in timeline:
         for i, pq in enumerate(t.get("per_question") or []):
             if not pq:
                 continue
-            b = q_bucket.setdefault(i, {"eye": [], "posture": []})
+            b = buckets.setdefault(i, {"eye": [], "posture": []})
             if pq.get("eye_contact_pct"):
                 b["eye"].append(pq["eye_contact_pct"])
             if pq.get("posture_score"):
                 b["posture"].append(pq["posture_score"])
-    per_question_avg = [
+    return [
         {
             "question_index": i,
             "avg_eye_contact_pct": round(sum(v["eye"]) / len(v["eye"])) if v["eye"] else 0,
             "avg_posture_score": round(sum(v["posture"]) / len(v["posture"])) if v["posture"] else 0,
             "samples": max(len(v["eye"]), len(v["posture"])),
         }
-        for i, v in sorted(q_bucket.items())
+        for i, v in sorted(buckets.items())
     ]
+
+
+@api_router.get("/interview/body-language/trends")
+async def body_language_trends(user=Depends(get_current_user)):
+    """Aggregate body-language history across all completed interviews for the current user."""
+    docs = await db.interviews.find(
+        {"user_id": user["id"], "status": "completed"},
+        {"_id": 0},
+    ).sort("created_at", 1).to_list(200)
+
+    timeline = _build_bl_timeline(docs)
+    if not timeline:
+        return {"timeline": [], "summary": None}
+
+    eyes = [t["avg_eye_contact_pct"] for t in timeline]
+    postures = [t["avg_posture_score"] for t in timeline]
+    direction, delta = _compute_trend(timeline)
+    best = max(timeline, key=lambda t: t["presence_score"])
+    worst = min(timeline, key=lambda t: t["presence_score"])
 
     return {
         "timeline": timeline,
         "summary": {
             "total_interviews": len(timeline),
-            "overall_avg_eye_contact_pct": overall_eye,
-            "overall_avg_posture_score": overall_posture,
-            "trend_direction": trend_direction,
-            "trend_delta": trend_delta,
+            "overall_avg_eye_contact_pct": round(sum(eyes) / len(eyes)),
+            "overall_avg_posture_score": round(sum(postures) / len(postures)),
+            "trend_direction": direction,
+            "trend_delta": delta,
             "best_interview": {"id": best["id"], "role": best["role"], "presence_score": best["presence_score"], "created_at": best["created_at"]},
             "worst_interview": {"id": worst["id"], "role": worst["role"], "presence_score": worst["presence_score"], "created_at": worst["created_at"]},
-            "per_question_avg": per_question_avg,
+            "per_question_avg": _aggregate_per_question(timeline),
         },
     }
 

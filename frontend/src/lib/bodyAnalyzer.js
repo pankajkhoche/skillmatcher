@@ -62,7 +62,7 @@ function analyzeOnce(video, tsMs) {
         out.eyeContact = Math.max(0, Math.min(1, 1 - dev / 0.35));
       }
     }
-  } catch (e) { /* face detect can fail if resolution not ready */ }
+  } catch (e) { console.warn("face detect frame failed", e); }
 
   try {
     const pRes = poseLandmarker.detectForVideo(video, tsMs);
@@ -89,7 +89,7 @@ function analyzeOnce(video, tsMs) {
 
       out.posture = tiltScore * 0.4 + leanScore * 0.3 + uprightScore * 0.3;
     }
-  } catch (e) { /* pose detect can fail */ }
+  } catch (e) { console.warn("pose detect frame failed", e); }
 
   return out;
 }

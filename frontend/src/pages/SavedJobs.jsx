@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Nav from "@/components/Nav";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -16,19 +16,19 @@ export default function SavedJobs() {
   const [items, setItems] = useState([]);
   const [filter, setFilter] = useState("all");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try { const r = await api.get("/jobs/saved"); setItems(r.data.items || []); }
-    catch { toast.error("Failed to load"); }
-  };
-  useEffect(() => { load(); }, []);
+    catch (e) { console.warn("saved jobs load failed", e); toast.error("Failed to load"); }
+  }, []);
+  useEffect(() => { load(); }, [load]);
 
   const setStatus = async (id, status) => {
     try { await api.put(`/jobs/saved/${id}`, { status, notes: "" }); toast.success(`Marked ${status}`); load(); }
-    catch { toast.error("Failed"); }
+    catch (e) { console.warn("set status failed", e); toast.error("Failed"); }
   };
   const del = async (id) => {
     try { await api.delete(`/jobs/saved/${id}`); toast.success("Removed"); load(); }
-    catch { toast.error("Failed"); }
+    catch (e) { console.warn("delete saved job failed", e); toast.error("Failed"); }
   };
 
   const filtered = filter === "all" ? items : items.filter(x => x.status === filter);

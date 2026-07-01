@@ -12,7 +12,10 @@ export function AuthProvider({ children }) {
     if (!token) { setLoading(false); return; }
     api.get("/auth/me")
       .then((r) => setUser(r.data.user))
-      .catch(() => localStorage.removeItem("tiq_token"))
+      .catch((e) => {
+        console.warn("auth/me failed, clearing token", e?.response?.status);
+        localStorage.removeItem("tiq_token");
+      })
       .finally(() => setLoading(false));
   }, []);
 
