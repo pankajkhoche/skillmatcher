@@ -55,44 +55,44 @@ export default function ResumeRewriter() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-[#06060B] text-white">
       <Nav />
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14">
         <div className="mb-10 max-w-3xl">
           <div className="overline mb-3">Real-time rewriter</div>
-          <h1 className="font-heading font-light text-4xl sm:text-5xl tracking-tighter">One resume. Any job. <span className="text-[#D4AF37] italic">Perfectly tuned.</span></h1>
+          <h1 className="font-heading font-light text-4xl sm:text-5xl tracking-tighter">One resume. Any job. <span className="text-[#C084FC] italic">Perfectly tuned.</span></h1>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-6">
+            <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A12] p-6">
               <label className="overline block mb-3">Job description</label>
               <textarea
                 data-testid="rewriter-jd"
                 value={jd}
                 onChange={(e)=>setJd(e.target.value)}
                 placeholder="Paste the target job description here..."
-                className="w-full bg-transparent border border-white/10 rounded-xl p-4 min-h-[200px] text-sm focus:border-[#D4AF37]/50 transition-colors placeholder:text-zinc-700 leading-relaxed"
+                className="w-full bg-transparent border border-white/10 rounded-xl p-4 min-h-[200px] text-sm focus:border-[#C084FC]/50 transition-colors placeholder:text-zinc-700 leading-relaxed"
               />
             </div>
-            <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-6">
+            <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A12] p-6">
               <label className="overline block mb-3">Your resume</label>
               <textarea
                 data-testid="rewriter-resume"
                 value={resumeText}
                 onChange={(e)=>setResumeText(e.target.value)}
                 placeholder="Paste your resume text, or upload one on the Analyzer page..."
-                className="w-full bg-transparent border border-white/10 rounded-xl p-4 min-h-[240px] text-sm focus:border-[#D4AF37]/50 transition-colors placeholder:text-zinc-700 leading-relaxed"
+                className="w-full bg-transparent border border-white/10 rounded-xl p-4 min-h-[240px] text-sm focus:border-[#C084FC]/50 transition-colors placeholder:text-zinc-700 leading-relaxed"
               />
             </div>
-            <button onClick={rewrite} disabled={loading} data-testid="rewriter-submit" className="w-full bg-[#D4AF37] text-black font-medium py-3.5 rounded-xl hover:bg-[#FDE047] transition-all gold-glow inline-flex items-center justify-center gap-2 disabled:opacity-40">
+            <button onClick={rewrite} disabled={loading} data-testid="rewriter-submit" className="w-full brand-bg text-white font-medium py-3.5 rounded-xl brand-bg-hover transition-all brand-glow inline-flex items-center justify-center gap-2 disabled:opacity-40">
               {loading ? "Rewriting…" : (<><Sparkles size={16} strokeWidth={2}/> Rewrite for this job</>)}
             </button>
           </div>
 
           <div>
             {!result && !loading && (
-              <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-12 h-full flex items-center justify-center text-center">
+              <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A12] p-12 h-full flex items-center justify-center text-center">
                 <div>
                   <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/10 mx-auto mb-4 flex items-center justify-center">
                     <ArrowRight size={22} className="text-zinc-500" strokeWidth={1.5}/>
@@ -102,35 +102,35 @@ export default function ResumeRewriter() {
               </div>
             )}
             {loading && (
-              <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-12 text-center animate-pulse">
+              <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A12] p-12 text-center animate-pulse">
                 <div className="font-heading text-2xl font-light text-zinc-400">Crafting your rewrite…</div>
                 <div className="overline mt-3">Claude Sonnet 4.5</div>
               </div>
             )}
             {result && (
               <div className="space-y-4 fade-up" data-testid="rewriter-result">
-                <div className="rounded-2xl border border-[#D4AF37]/20 bg-gradient-to-br from-[#D4AF37]/[0.06] to-transparent p-6">
+                <div className="rounded-2xl border border-purple-400/20 bg-gradient-to-br from-purple-500/[0.06] to-transparent p-6">
                   <div className="overline mb-3">Match score</div>
                   <div className="flex items-baseline gap-3 mb-5">
                     <span className="font-heading text-2xl text-zinc-600 line-through">{result.match_score_before}</span>
                     <ArrowRight size={16} className="text-zinc-500"/>
-                    <span className="font-heading text-5xl font-light text-[#D4AF37]">{result.match_score_after}</span>
+                    <span className="font-heading text-5xl font-light text-[#C084FC]">{result.match_score_after}</span>
                     <span className="font-mono text-sm text-zinc-500">/100</span>
                   </div>
                   {result.keywords_added?.length > 0 && (
                     <div>
                       <div className="overline mb-2">Keywords added</div>
                       <div className="flex flex-wrap gap-1.5">
-                        {result.keywords_added.map((k,i)=>(<span key={i} className="text-xs px-2.5 py-1 rounded-md bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 font-mono">{k}</span>))}
+                        {result.keywords_added.map((k,i)=>(<span key={i} className="text-xs px-2.5 py-1 rounded-md bg-[#C084FC]/10 text-[#C084FC] border border-purple-400/20 font-mono">{k}</span>))}
                       </div>
                     </div>
                   )}
                 </div>
 
-                <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-6">
+                <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A12] p-6">
                   <div className="flex justify-between items-center mb-4">
                     <div className="overline">Rewritten resume</div>
-                    <button onClick={download} disabled={downloading} data-testid="rewriter-download" className="bg-white/[0.03] border border-white/10 hover:border-[#D4AF37]/40 hover:text-[#D4AF37] text-zinc-300 text-xs font-medium px-3 py-1.5 rounded-lg transition-all inline-flex items-center gap-1.5">
+                    <button onClick={download} disabled={downloading} data-testid="rewriter-download" className="bg-white/[0.03] border border-white/10 hover:border-[#C084FC]/40 hover:text-[#C084FC] text-zinc-300 text-xs font-medium px-3 py-1.5 rounded-lg transition-all inline-flex items-center gap-1.5">
                       <Download size={12} strokeWidth={1.5}/> {downloading ? "..." : "Download PDF"}
                     </button>
                   </div>
@@ -138,12 +138,12 @@ export default function ResumeRewriter() {
                 </div>
 
                 {result.improvements?.length > 0 && (
-                  <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-6">
+                  <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A12] p-6">
                     <div className="overline mb-3">What changed</div>
                     <ul className="space-y-2 text-sm text-zinc-400">
                       {result.improvements.map((it,i)=>(
                         <li key={i} className="flex gap-3">
-                          <span className="text-[#D4AF37] font-mono text-xs mt-0.5">{String(i+1).padStart(2,"0")}</span>
+                          <span className="text-[#C084FC] font-mono text-xs mt-0.5">{String(i+1).padStart(2,"0")}</span>
                           <span className="leading-relaxed">{it}</span>
                         </li>
                       ))}

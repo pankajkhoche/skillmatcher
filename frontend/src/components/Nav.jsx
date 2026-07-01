@@ -17,10 +17,10 @@ export default function Nav() {
     <nav className="sticky top-0 z-40 border-b border-white/[0.06] bg-black/60 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2.5" data-testid="nav-logo">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4AF37] to-[#8B7318] flex items-center justify-center">
-            <Sparkles size={16} className="text-black" strokeWidth={2.5} />
+          <div className="w-8 h-8 rounded-lg brand-bg flex items-center justify-center">
+            <Sparkles size={16} className="text-white" strokeWidth={2.5} />
           </div>
-          <span className="font-heading font-medium text-xl tracking-tight">Talent<span className="text-[#D4AF37]">IQ</span></span>
+          <span className="font-heading font-medium text-xl tracking-tight">Talent<span className="brand-text">IQ</span></span>
         </Link>
 
         {user ? (
@@ -31,6 +31,8 @@ export default function Nav() {
               <Link data-testid="nav-rewriter" to="/rewriter" className={linkCls("/rewriter")}>Rewriter</Link>
               <Link data-testid="nav-skills" to="/skills" className={linkCls("/skills")}>Skills</Link>
               <Link data-testid="nav-jobs" to="/jobs" className={linkCls("/jobs")}>Jobs</Link>
+              <Link data-testid="nav-interview" to="/interview" className={linkCls("/interview")}>Interview</Link>
+              <Link data-testid="nav-history" to="/history" className={linkCls("/history")}>History</Link>
             </div>
             <div className="flex items-center gap-2">
               <Link data-testid="nav-profile" to="/profile" className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:border-white/20 transition-all"><User size={15} strokeWidth={1.5} /></Link>
@@ -40,7 +42,7 @@ export default function Nav() {
         ) : (
           <div className="flex items-center gap-3">
             <Link data-testid="nav-login" to="/login" className="text-sm text-zinc-400 hover:text-white transition-colors px-4 py-2">Sign in</Link>
-            <Link data-testid="nav-signup" to="/signup" className="text-sm font-medium bg-[#D4AF37] text-black hover:bg-[#FDE047] px-4 py-2 rounded-lg transition-all gold-glow">Get started</Link>
+            <Link data-testid="nav-signup" to="/signup" className="text-sm font-medium brand-bg text-white brand-bg-hover px-4 py-2 rounded-lg transition-all brand-glow">Get started</Link>
           </div>
         )}
       </div>

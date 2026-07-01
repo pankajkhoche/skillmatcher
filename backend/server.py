@@ -83,6 +83,16 @@ class RewriteIn(BaseModel):
     job_description: str
 
 
+class InterviewStartIn(BaseModel):
+    role: str
+    difficulty: Optional[str] = "medium"
+
+
+class InterviewSubmitIn(BaseModel):
+    interview_id: str
+    answers: List[str]
+
+
 # ---------- Helpers ----------
 def hash_pw(p: str) -> str:
     return bcrypt.hashpw(p.encode(), bcrypt.gensalt()).decode()
@@ -373,6 +383,127 @@ async def suggest_jobs(user=Depends(get_current_user)):
 @api_router.get("/")
 async def root():
     return {"service": "TalentIQ", "status": "ok"}
+
+
+# ---------- History (analyzer + rewriter) ----------
+@api_router.get("/history/resumes")
+async def history_resumes(user=Depends(get_current_user)):
+    docs = await db.resumes.find({"user_id": user["id"]}, {"_id": 0, "resume_text": 0}).sort("created_at", -1).to_list(50)
+    return {"items": docs}
+
+
+@api_router.get("/history/rewrites")
+async def history_rewrites(user=Depends(get_current_user)):
+    docs = await db.rewrites.find({"user_id": user["id"]}, {"_id": 0}).sort("created_at", -1).to_list(50)
+    return {"items": docs}
+
+
+# ---------- Mock Interview ----------
+INTERVIEW_QUESTIONS_SYSTEM = """You are an expert technical interviewer. Generate 5 interview questions tailored to the given role and difficulty.
+Return STRICT JSON:
+{
+  "questions": [
+    {"id": int, "type": "behavioral"|"technical"|"situational", "question": string}
+  ]
+}
+Return ONLY the JSON."""
+
+INTERVIEW_SCORE_SYSTEM = """You are a strict but fair interview coach. Evaluate the candidate's answers.
+Return STRICT JSON:
+{
+  "overall_score": int (0-100),
+  "communication_score": int (0-100),
+  "technical_score": int (0-100),
+  "confidence_score": int (0-100),
+  "clarity_score": int (0-100),
+  "strengths": [string, ...],
+  "improvement_areas": [string, ...],
+  "per_question_feedback": [
+    {"question": string, "answer": string, "score": int, "feedback": string}
+  ],
+  "verdict": string (one line summary),
+  "next_steps": [string, ...]
+}
+Return ONLY the JSON."""
+
+
+@api_router.post("/interview/start")
+async def interview_start(inp: InterviewStartIn, user=Depends(get_current_user)):
+    if not inp.role or len(inp.role) < 2:
+        raise HTTPException(400, "Role required")
+    result = await call_claude_json(INTERVIEW_QUESTIONS_SYSTEM, f"ROLE: {inp.role}\nDIFFICULTY: {inp.difficulty}\nCANDIDATE SKILLS: {', '.join(user.get('skills', [])[:12])}")
+    iv_id = str(uuid.uuid4())
+    doc = {
+        "id": iv_id,
+        "user_id": user["id"],
+        "role": inp.role,
+        "difficulty": inp.difficulty,
+        "questions": result.get("questions", []),
+        "status": "in_progress",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.interviews.insert_one(doc)
+    return {"interview_id": iv_id, "questions": doc["questions"]}
+
+
+@api_router.post("/interview/submit")
+async def interview_submit(inp: InterviewSubmitIn, user=Depends(get_current_user)):
+    iv = await db.interviews.find_one({"id": inp.interview_id, "user_id": user["id"]})
+    if not iv:
+        raise HTTPException(404, "Interview not found")
+    qs = iv.get("questions", [])
+    payload = "ROLE: " + iv["role"] + "\n\n" + "\n\n".join(
+        f"Q{i+1} ({q.get('type')}): {q.get('question')}\nAnswer: {inp.answers[i] if i < len(inp.answers) else '(no answer)'}"
+        for i, q in enumerate(qs)
+    )
+    result = await call_claude_json(INTERVIEW_SCORE_SYSTEM, payload)
+    await db.interviews.update_one({"id": inp.interview_id}, {"$set": {"answers": inp.answers, "scorecard": result, "status": "completed", "completed_at": datetime.now(timezone.utc).isoformat()}})
+    return {"interview_id": inp.interview_id, "scorecard": result}
+
+
+@api_router.get("/interview/history")
+async def interview_history(user=Depends(get_current_user)):
+    docs = await db.interviews.find({"user_id": user["id"]}, {"_id": 0}).sort("created_at", -1).to_list(50)
+    return {"items": docs}
+
+
+@api_router.post("/interview/scorecard/pdf")
+async def interview_pdf(payload: dict, user=Depends(get_current_user)):
+    iv_id = payload.get("interview_id")
+    iv = await db.interviews.find_one({"id": iv_id, "user_id": user["id"]}, {"_id": 0})
+    if not iv or not iv.get("scorecard"):
+        raise HTTPException(404, "Scorecard not found")
+    sc = iv["scorecard"]
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=letter, leftMargin=0.75*inch, rightMargin=0.75*inch, topMargin=0.75*inch, bottomMargin=0.75*inch)
+    styles = getSampleStyleSheet()
+    title = ParagraphStyle('t', parent=styles['Heading1'], fontName='Helvetica-Bold', fontSize=22, spaceAfter=8, textColor='#A855F7')
+    h2 = ParagraphStyle('h2', parent=styles['Heading2'], fontName='Helvetica-Bold', fontSize=14, spaceAfter=6, spaceBefore=12)
+    body = ParagraphStyle('b', parent=styles['Normal'], fontName='Helvetica', fontSize=10.5, leading=14)
+    story = []
+    story.append(Paragraph("TalentIQ — Interview Scorecard", title))
+    story.append(Paragraph(f"Role: <b>{iv['role']}</b> · Difficulty: {iv.get('difficulty','medium')}", body))
+    story.append(Spacer(1, 10))
+    story.append(Paragraph(f"<b>Overall: {sc.get('overall_score','-')}/100</b>", h2))
+    story.append(Paragraph(
+        f"Communication: {sc.get('communication_score','-')} &nbsp;·&nbsp; Technical: {sc.get('technical_score','-')} &nbsp;·&nbsp; Confidence: {sc.get('confidence_score','-')} &nbsp;·&nbsp; Clarity: {sc.get('clarity_score','-')}",
+        body,
+    ))
+    story.append(Paragraph(f"<i>{sc.get('verdict','')}</i>", body))
+    story.append(Paragraph("Strengths", h2))
+    for s in sc.get("strengths", []): story.append(Paragraph(f"• {s}", body))
+    story.append(Paragraph("Improvement Areas", h2))
+    for s in sc.get("improvement_areas", []): story.append(Paragraph(f"• {s}", body))
+    story.append(Paragraph("Next Steps", h2))
+    for s in sc.get("next_steps", []): story.append(Paragraph(f"• {s}", body))
+    story.append(Paragraph("Per-Question Feedback", h2))
+    for i, q in enumerate(sc.get("per_question_feedback", [])):
+        story.append(Paragraph(f"<b>Q{i+1}. {q.get('question','')}</b> — score {q.get('score','-')}", body))
+        story.append(Paragraph(f"<i>Feedback:</i> {q.get('feedback','')}", body))
+        story.append(Spacer(1, 4))
+    doc.build(story)
+    return Response(content=buf.getvalue(), media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="talentiq_interview_{iv_id[:8]}.pdf"'})
 
 
 app.include_router(api_router)

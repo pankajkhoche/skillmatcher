@@ -19,33 +19,33 @@ export default function Jobs() {
     } finally { setLoading(false); }
   };
 
-  const scoreCls = (s) => s >= 80 ? "text-[#D4AF37] border-[#D4AF37]/30 bg-[#D4AF37]/10" : s >= 60 ? "text-amber-500 border-amber-500/30 bg-amber-500/10" : "text-zinc-400 border-white/10 bg-white/[0.03]";
+  const scoreCls = (s) => s >= 80 ? "text-[#C084FC] border-[#C084FC]/30 bg-[#C084FC]/10" : s >= 60 ? "text-amber-500 border-amber-500/30 bg-amber-500/10" : "text-zinc-400 border-white/10 bg-white/[0.03]";
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-[#06060B] text-white">
       <Nav />
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14">
         <div className="flex flex-wrap justify-between items-end gap-6 mb-10">
           <div>
             <div className="overline mb-3">Job matches</div>
-            <h1 className="font-heading font-light text-4xl sm:text-5xl tracking-tighter">Roles that <span className="text-[#D4AF37] italic">fit you.</span></h1>
+            <h1 className="font-heading font-light text-4xl sm:text-5xl tracking-tighter">Roles that <span className="text-[#C084FC] italic">fit you.</span></h1>
           </div>
-          <button data-testid="jobs-refresh" onClick={load} disabled={loading} className="bg-[#D4AF37] text-black font-medium px-5 py-3 rounded-xl hover:bg-[#FDE047] transition-all gold-glow inline-flex items-center gap-2 disabled:opacity-40">
+          <button data-testid="jobs-refresh" onClick={load} disabled={loading} className="brand-bg text-white font-medium px-5 py-3 rounded-xl brand-bg-hover transition-all brand-glow inline-flex items-center gap-2 disabled:opacity-40">
             <Sparkles size={16} strokeWidth={2}/> {loading ? "Finding…" : "Find matches"}
           </button>
         </div>
 
         {jobs.length === 0 && !loading && (
-          <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-16 text-center">
+          <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A12] p-16 text-center">
             <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/10 mx-auto mb-4 flex items-center justify-center">
               <Briefcase size={22} className="text-zinc-500" strokeWidth={1.5}/>
             </div>
-            <p className="text-zinc-500">Click <span className="text-[#D4AF37]">Find matches</span> to see roles curated for you.</p>
+            <p className="text-zinc-500">Click <span className="text-[#C084FC]">Find matches</span> to see roles curated for you.</p>
           </div>
         )}
 
         {loading && (
-          <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-16 text-center animate-pulse">
+          <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A12] p-16 text-center animate-pulse">
             <div className="font-heading text-2xl font-light text-zinc-400">Searching the market…</div>
             <div className="overline mt-3">Claude Sonnet 4.5</div>
           </div>
@@ -53,7 +53,7 @@ export default function Jobs() {
 
         <div className="space-y-3">
           {jobs.map((j, i) => (
-            <div key={i} className="group rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-6 card-hover" data-testid={`job-${i}`}>
+            <div key={i} className="group rounded-2xl border border-white/[0.06] bg-[#0A0A12] p-6 card-hover" data-testid={`job-${i}`}>
               <div className="flex justify-between items-start gap-6 flex-wrap">
                 <div className="flex-1 min-w-0">
                   <h3 className="font-heading text-2xl font-medium mb-1.5 flex items-center gap-2">
@@ -79,8 +79,8 @@ export default function Jobs() {
                 </div>
               )}
               {j.why_you_fit && (
-                <p className="text-sm mt-4 p-4 rounded-xl border border-[#D4AF37]/15 bg-[#D4AF37]/[0.03] text-zinc-300 leading-relaxed">
-                  <span className="text-[#D4AF37] font-medium">Why you fit — </span>{j.why_you_fit}
+                <p className="text-sm mt-4 p-4 rounded-xl border border-[#C084FC]/15 bg-[#C084FC]/[0.03] text-zinc-300 leading-relaxed">
+                  <span className="text-[#C084FC] font-medium">Why you fit — </span>{j.why_you_fit}
                 </p>
               )}
             </div>

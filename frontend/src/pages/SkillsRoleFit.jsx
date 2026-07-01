@@ -43,22 +43,22 @@ export default function SkillsRoleFit() {
     } finally { setLoading(false); }
   };
 
-  const scoreColor = (s) => s >= 80 ? "text-[#D4AF37]" : s >= 60 ? "text-amber-500" : "text-zinc-500";
+  const scoreColor = (s) => s >= 80 ? "text-[#C084FC]" : s >= 60 ? "text-amber-500" : "text-zinc-500";
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-[#06060B] text-white">
       <Nav />
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14">
         <div className="mb-10 max-w-3xl">
           <div className="overline mb-3">Skills & role fit</div>
-          <h1 className="font-heading font-light text-4xl sm:text-5xl tracking-tighter">Which role should you <span className="text-[#D4AF37] italic">chase?</span></h1>
+          <h1 className="font-heading font-light text-4xl sm:text-5xl tracking-tighter">Which role should you <span className="text-[#C084FC] italic">chase?</span></h1>
         </div>
 
-        <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-8 mb-6">
+        <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A12] p-8 mb-6">
           <label className="overline block mb-3">Your skills</label>
           <div className="flex flex-wrap gap-1.5 mb-4 min-h-[40px]" data-testid="skills-tags">
             {skills.map((s) => (
-              <span key={s} className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 font-mono">
+              <span key={s} className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md bg-[#C084FC]/10 text-[#C084FC] border border-purple-400/20 font-mono">
                 {s}
                 <button onClick={()=>removeSkill(s)} data-testid={`remove-${s}`} className="hover:text-white transition-colors"><X size={12}/></button>
               </span>
@@ -71,15 +71,15 @@ export default function SkillsRoleFit() {
               onChange={(e)=>setInput(e.target.value)}
               onKeyDown={(e)=>{ if (e.key === "Enter") { e.preventDefault(); addSkill(); } }}
               placeholder="e.g. React, Python, SQL…"
-              className="flex-1 bg-transparent border border-white/10 rounded-xl px-4 py-3 focus:border-[#D4AF37]/50 transition-colors placeholder:text-zinc-700"
+              className="flex-1 bg-transparent border border-white/10 rounded-xl px-4 py-3 focus:border-[#C084FC]/50 transition-colors placeholder:text-zinc-700"
             />
             <button onClick={addSkill} data-testid="skills-add" className="border border-white/10 hover:border-white/20 hover:bg-white/[0.03] transition-all px-4 rounded-xl inline-flex items-center gap-1.5 text-sm font-medium"><Plus size={14}/> Add</button>
           </div>
 
           <label className="overline block mb-2 mt-6">Target role (optional)</label>
-          <input data-testid="target-role" value={target} onChange={(e)=>setTarget(e.target.value)} placeholder="Software Engineer, Product Manager…" className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3 focus:border-[#D4AF37]/50 transition-colors placeholder:text-zinc-700"/>
+          <input data-testid="target-role" value={target} onChange={(e)=>setTarget(e.target.value)} placeholder="Software Engineer, Product Manager…" className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3 focus:border-[#C084FC]/50 transition-colors placeholder:text-zinc-700"/>
 
-          <button onClick={analyze} disabled={loading} data-testid="skills-analyze" className="w-full bg-[#D4AF37] text-black font-medium py-3.5 rounded-xl mt-6 hover:bg-[#FDE047] transition-all gold-glow inline-flex items-center justify-center gap-2 disabled:opacity-40">
+          <button onClick={analyze} disabled={loading} data-testid="skills-analyze" className="w-full brand-bg text-white font-medium py-3.5 rounded-xl mt-6 brand-bg-hover transition-all brand-glow inline-flex items-center justify-center gap-2 disabled:opacity-40">
             {loading ? "Analyzing…" : (<><Sparkles size={16} strokeWidth={2}/> Get recommendations</>)}
           </button>
         </div>
@@ -88,7 +88,7 @@ export default function SkillsRoleFit() {
           <div className="space-y-10 fade-up" data-testid="skills-result">
             <div>
               <div className="overline mb-4">Top pick</div>
-              <div className="rounded-2xl border border-[#D4AF37]/25 bg-gradient-to-br from-[#D4AF37]/[0.08] to-transparent p-10">
+              <div className="rounded-2xl border border-purple-400/25 bg-gradient-to-br from-purple-500/[0.08] to-transparent p-10">
                 <h2 className="font-heading font-light text-5xl tracking-tighter">{result.top_pick}</h2>
               </div>
             </div>
@@ -97,7 +97,7 @@ export default function SkillsRoleFit() {
               <div className="overline mb-4">Recommended roles</div>
               <div className="grid md:grid-cols-2 gap-4">
                 {result.recommended_roles?.map((r, i) => (
-                  <div key={i} className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-6 card-hover">
+                  <div key={i} className="rounded-2xl border border-white/[0.06] bg-[#0A0A12] p-6 card-hover">
                     <div className="flex justify-between items-start mb-3">
                       <h3 className="font-heading text-xl font-medium">{r.role}</h3>
                       <span className={`font-mono font-medium ${scoreColor(r.fit_score)}`}>{r.fit_score}%</span>
@@ -126,8 +126,8 @@ export default function SkillsRoleFit() {
                 <div className="border-l border-white/10 ml-6 space-y-6">
                   {result.learning_roadmap.map((step, i) => (
                     <div key={i} className="relative pl-8">
-                      <div className="absolute -left-[13px] top-1 w-6 h-6 rounded-full bg-[#0A0A0A] border border-[#D4AF37]/40 flex items-center justify-center font-mono text-[10px] text-[#D4AF37]">{step.step}</div>
-                      <div className="rounded-xl border border-white/[0.06] bg-[#0A0A0A] p-5">
+                      <div className="absolute -left-[13px] top-1 w-6 h-6 rounded-full bg-[#0A0A12] border border-[#C084FC]/40 flex items-center justify-center font-mono text-[10px] text-[#C084FC]">{step.step}</div>
+                      <div className="rounded-xl border border-white/[0.06] bg-[#0A0A12] p-5">
                         <div className="flex flex-wrap items-baseline justify-between gap-2 mb-2">
                           <h4 className="font-heading text-lg font-medium">{step.title}</h4>
                           <div className="overline">{step.duration}</div>

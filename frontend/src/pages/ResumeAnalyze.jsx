@@ -34,7 +34,7 @@ export default function ResumeAnalyze() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-[#06060B] text-white">
       <Nav />
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14">
         <div className="mb-10">
@@ -49,7 +49,7 @@ export default function ResumeAnalyze() {
               onDrop={onDrop}
               onClick={()=>inputRef.current?.click()}
               data-testid="resume-dropzone"
-              className="bg-[#0A0A0A] border border-dashed border-white/15 rounded-2xl p-12 cursor-pointer hover:border-[#D4AF37]/40 hover:bg-[#D4AF37]/[0.02] transition-all text-center min-h-[320px] flex flex-col justify-center items-center"
+              className="bg-[#0A0A12] border border-dashed border-white/15 rounded-2xl p-12 cursor-pointer hover:border-[#C084FC]/40 hover:bg-[#C084FC]/[0.02] transition-all text-center min-h-[320px] flex flex-col justify-center items-center"
             >
               <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center mb-5">
                 <Upload size={22} className="text-zinc-400" strokeWidth={1.5}/>
@@ -58,11 +58,11 @@ export default function ResumeAnalyze() {
               <div className="text-sm text-zinc-500">PDF or DOCX · max 10MB</div>
               <input ref={inputRef} type="file" accept=".pdf,.docx" hidden onChange={(e)=>setFile(e.target.files?.[0])} data-testid="resume-file-input"/>
             </div>
-            <button onClick={handleUpload} disabled={loading || !file} data-testid="resume-analyze-btn" className="w-full mt-4 bg-[#D4AF37] text-black font-medium py-3.5 rounded-xl hover:bg-[#FDE047] transition-all gold-glow disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2">
+            <button onClick={handleUpload} disabled={loading || !file} data-testid="resume-analyze-btn" className="w-full mt-4 brand-bg text-white font-medium py-3.5 rounded-xl brand-bg-hover transition-all brand-glow disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2">
               {loading ? "Analyzing with Claude…" : (<><Sparkles size={16} strokeWidth={2}/> Analyze resume</>)}
             </button>
             {result && (
-              <Link to="/rewriter" state={{ resumeText: result.resume_text }} data-testid="go-rewrite" className="w-full mt-3 border border-white/10 hover:border-[#D4AF37]/30 hover:bg-white/[0.02] transition-all font-medium py-3.5 rounded-xl flex items-center justify-center gap-2">
+              <Link to="/rewriter" state={{ resumeText: result.resume_text }} data-testid="go-rewrite" className="w-full mt-3 border border-white/10 hover:border-[#C084FC]/30 hover:bg-white/[0.02] transition-all font-medium py-3.5 rounded-xl flex items-center justify-center gap-2">
                 <FileText size={16} strokeWidth={1.5}/> Rewrite this for a job <ArrowUpRight size={14}/>
               </Link>
             )}
@@ -70,7 +70,7 @@ export default function ResumeAnalyze() {
 
           <div>
             {!result && !loading && (
-              <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-12 h-full flex items-center justify-center text-center">
+              <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A12] p-12 h-full flex items-center justify-center text-center">
                 <div>
                   <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/10 mx-auto mb-4 flex items-center justify-center">
                     <Sparkles size={22} className="text-zinc-500" strokeWidth={1.5}/>
@@ -80,7 +80,7 @@ export default function ResumeAnalyze() {
               </div>
             )}
             {loading && (
-              <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-12 h-full flex items-center justify-center text-center">
+              <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A12] p-12 h-full flex items-center justify-center text-center">
                 <div className="animate-pulse">
                   <div className="font-heading text-2xl font-light text-zinc-400">Reading your resume…</div>
                   <div className="overline mt-3">Claude Sonnet 4.5</div>
@@ -89,14 +89,14 @@ export default function ResumeAnalyze() {
             )}
             {result && (
               <div className="space-y-4 fade-up" data-testid="resume-result">
-                <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-8 flex flex-col items-center">
+                <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A12] p-8 flex flex-col items-center">
                   <ScoreDial score={result.analysis.ats_score} />
                   <p className="text-sm text-zinc-400 mt-6 text-center max-w-md italic">{result.analysis.one_line_summary}</p>
                   {result.analysis.score_breakdown && (
                     <div className="grid grid-cols-5 gap-2 mt-6 w-full">
                       {Object.entries(result.analysis.score_breakdown).map(([k,v])=>(
                         <div key={k} className="rounded-lg border border-white/[0.06] p-3 text-center">
-                          <div className="font-mono text-lg text-[#D4AF37]">{v}</div>
+                          <div className="font-mono text-lg text-[#C084FC]">{v}</div>
                           <div className="text-[9px] uppercase tracking-widest text-zinc-500 mt-1">{k}</div>
                         </div>
                       ))}
@@ -106,7 +106,7 @@ export default function ResumeAnalyze() {
 
                 <Section title="Strengths" icon={<CheckCircle2 size={16} className="text-emerald-400" strokeWidth={1.5}/>} items={result.analysis.pros} testid="pros" />
                 <Section title="Weaknesses" icon={<XCircle size={16} className="text-red-400" strokeWidth={1.5}/>} items={result.analysis.cons} testid="cons" />
-                <Section title="Suggested improvements" icon={<Sparkles size={16} className="text-[#D4AF37]" strokeWidth={1.5}/>} items={result.analysis.suggested_changes} testid="suggestions" featured />
+                <Section title="Suggested improvements" icon={<Sparkles size={16} className="text-[#C084FC]" strokeWidth={1.5}/>} items={result.analysis.suggested_changes} testid="suggestions" featured />
               </div>
             )}
           </div>
@@ -118,7 +118,7 @@ export default function ResumeAnalyze() {
 
 function Section({ title, icon, items = [], testid, featured }) {
   return (
-    <div className={`rounded-2xl border p-6 ${featured ? "border-[#D4AF37]/20 bg-[#D4AF37]/[0.03]" : "border-white/[0.06] bg-[#0A0A0A]"}`} data-testid={`section-${testid}`}>
+    <div className={`rounded-2xl border p-6 ${featured ? "border-purple-400/20 bg-[#C084FC]/[0.03]" : "border-white/[0.06] bg-[#0A0A12]"}`} data-testid={`section-${testid}`}>
       <div className="flex items-center gap-2 mb-4">
         {icon}
         <h3 className="font-heading text-lg font-medium">{title}</h3>

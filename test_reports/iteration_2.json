@@ -1,0 +1,28 @@
+{
+  "summary": "Phase 2 smoke test complete. All 6 backend endpoints (interview/start, interview/submit, interview/scorecard/pdf, interview/history, history/resumes, history/rewrites) return 200 with expected schema. Frontend full flow verified: intro splash, landing hero (purple-pink-orange gradient), signup -> dashboard, interview 5-question flow with next/prev, scorecard rendering with 4 metric cards + strengths/improvements/next-steps, PDF download triggered, History page with 3 tabs showing new interview item, and /resume regression loads OK. No console errors observed.",
+  "tested_scope": ["backend", "frontend", "auth", "integration"],
+  "passed": [
+    "POST /api/interview/start -> 200 with interview_id + 5 questions (id/type/question)",
+    "POST /api/interview/submit -> 200 with scorecard containing overall_score, communication_score, technical_score, confidence_score, clarity_score, strengths[5], improvement_areas[6], per_question_feedback[5], verdict, next_steps[7] (LLM/Claude live)",
+    "POST /api/interview/scorecard/pdf -> 200 application/pdf, 5206 bytes, valid %PDF-1.4 signature",
+    "GET /api/interview/history -> {items:[1]} after submit",
+    "GET /api/history/resumes -> {items:[]} (empty)",
+    "GET /api/history/rewrites -> {items:[]} (empty)",
+    "Intro splash: 'TalentIQ' brand text visible on first load, fades out",
+    "Landing: hero renders with purple/pink gradient (no missing CSS classes), CTA buttons visible",
+    "Signup form -> /dashboard reached; card-interview and card-history present with LIVE labels",
+    "/interview: iv-role, iv-diff-medium, iv-start -> 5 iv-answer-N textareas, iv-next navigation, iv-submit -> iv-scorecard rendered",
+    "Scorecard contains all 4 metric labels: Communication, Technical, Confidence, Clarity",
+    "iv-download button triggers PDF download (talentiq_interview.pdf)",
+    "/history: history-tab-resumes, history-tab-rewrites, history-tab-interviews all present; 1 interview item shown after submission",
+    "/resume regression: page loads, no missing CSS classes after global color swap"
+  ],
+  "failed": [],
+  "action_items": [
+    "Non-blocking note for main agent: /api/interview/submit expects answers as List[str] (positional by question order). The review request phrased it as 'answers[]' with objects {id, answer} -- the actual contract is list of plain strings. Frontend already sends the correct shape (verified end-to-end). Just confirm the OpenAPI/docs match."
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true,
+  "notes": "Test account: test+1782886287@talentiq.dev / Password123!. LLM (EMERGENT_LLM_KEY) is working - real scorecards returned with meaningful verdict/strengths/improvements text."
+}
