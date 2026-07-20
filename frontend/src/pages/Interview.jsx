@@ -59,19 +59,17 @@ function VideoAnswer({ onComplete, disabled, questionIndex }) {
   };
 
   // live meter refresh
+  // Live meter: sample analyzer at ~5fps via setInterval (matches analyzer's own rate),
+  // and skip setState when rounded values haven't changed to avoid needless re-renders.
   useEffect(() => {
-    let raf;
-    const tick = () => {
-      if (analyzerRef.current?.live) {
-        setLive({
-          eye: Math.round((analyzerRef.current.live.eye || 0) * 100),
-          posture: Math.round((analyzerRef.current.live.posture || 0) * 100),
-        });
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    const id = setInterval(() => {
+      const l = analyzerRef.current?.live;
+      if (!l) return;
+      const nextEye = Math.round((l.eye || 0) * 100);
+      const nextPosture = Math.round((l.posture || 0) * 100);
+      setLive((prev) => (prev.eye === nextEye && prev.posture === nextPosture ? prev : { eye: nextEye, posture: nextPosture }));
+    }, 200);
+    return () => clearInterval(id);
   }, []);
 
   // cleanup on unmount

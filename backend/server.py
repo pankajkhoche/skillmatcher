@@ -694,9 +694,13 @@ async def update_saved(job_id: str, inp: UpdateJobStatusIn, user=Depends(get_cur
     allowed = {"bookmarked", "applied", "interviewing", "offered", "rejected"}
     if inp.status not in allowed:
         raise HTTPException(400, f"status must be one of {allowed}")
+    updates = {"status": inp.status, "updated_at": datetime.now(timezone.utc).isoformat()}
+    # Only overwrite notes when the caller explicitly provided a non-empty value.
+    if inp.notes:
+        updates["notes"] = inp.notes
     r = await db.saved_jobs.update_one(
         {"id": job_id, "user_id": user["id"]},
-        {"$set": {"status": inp.status, "notes": inp.notes, "updated_at": datetime.now(timezone.utc).isoformat()}},
+        {"$set": updates},
     )
     if r.matched_count == 0:
         raise HTTPException(404, "Not found")
